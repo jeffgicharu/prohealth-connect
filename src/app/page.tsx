@@ -1,101 +1,200 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
+import { useEffect, useRef } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Brain, Calendar, Shield, Search, CreditCard, Users } from "lucide-react"
+
+export default function HomePage() {
+  const observerRef = useRef<IntersectionObserver | null>(null)
+
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("revealed")
+          }
+        })
+      },
+      { threshold: 0.1 },
+    )
+
+    const elements = document.querySelectorAll(".scroll-reveal")
+    elements.forEach((el) => observerRef.current?.observe(el))
+
+    return () => observerRef.current?.disconnect()
+  }, [])
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="w-full">
+      {/* Hero Section */}
+      <section className="min-h-[80vh] flex items-center justify-center bg-gradient-to-br from-brand-white to-gray-50/50 px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="animate-fade-in">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-brand-dark mb-6 leading-tight">
+              Modern Health, <span className="text-brand-primary">Simplified</span> &{" "}
+              <span className="text-brand-primary">Accessible</span>
+            </h1>
+            <p className="text-lg md:text-xl lg:text-2xl text-brand-light-gray mb-8 max-w-4xl mx-auto leading-relaxed">
+              Your trusted partner for AI-powered health insights and seamless wellness service bookings.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Button
+                size="lg"
+                className="bg-brand-primary hover:bg-brand-primary-hover text-brand-white px-8 py-4 text-lg font-semibold transition-all duration-200 transform hover:scale-105"
+              >
+                Explore Our Services
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-brand-primary text-brand-primary hover:bg-brand-primary/10 px-8 py-4 text-lg font-semibold transition-all duration-200 transform hover:scale-105"
+              >
+                Try AI Assistant
+              </Button>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </section>
+
+      {/* Features/Services Overview Section */}
+      <section className="py-20 px-6 lg:px-8 bg-brand-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16 scroll-reveal">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-brand-dark mb-6">
+              Discover How ProHealth Connect <span className="text-brand-primary">Empowers You</span>
+            </h2>
+            <p className="text-lg md:text-xl text-brand-light-gray max-w-3xl mx-auto">
+              Experience the future of healthcare with our innovative platform designed for your wellness journey.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Card 1: AI-Powered Insights */}
+            <Card className="scroll-reveal hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2 border-brand-light-gray/20">
+              <CardContent className="p-8 text-center">
+                <div className="w-16 h-16 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Brain className="w-8 h-8 text-brand-primary" />
+                </div>
+                <h3 className="text-xl font-bold text-brand-dark mb-4">AI-Powered Insights</h3>
+                <p className="text-brand-light-gray leading-relaxed">
+                  Access general health information and document summaries through our intelligent assistant. (Always
+                  consult a doctor for medical advice)
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Card 2: Easy Service Booking */}
+            <Card className="scroll-reveal hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2 border-brand-light-gray/20">
+              <CardContent className="p-8 text-center">
+                <div className="w-16 h-16 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Calendar className="w-8 h-8 text-brand-primary" />
+                </div>
+                <h3 className="text-xl font-bold text-brand-dark mb-4">Easy Service Booking</h3>
+                <p className="text-brand-light-gray leading-relaxed">
+                  Browse and book wellness consultations seamlessly. Choose your preferred service and time with ease.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Card 3: Secure & Diverse Payments */}
+            <Card className="scroll-reveal hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2 border-brand-light-gray/20">
+              <CardContent className="p-8 text-center">
+                <div className="w-16 h-16 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Shield className="w-8 h-8 text-brand-primary" />
+                </div>
+                <h3 className="text-xl font-bold text-brand-dark mb-4">Secure & Diverse Payments</h3>
+                <p className="text-brand-light-gray leading-relaxed">
+                  Pay for your services securely using Stripe for card payments or M-Pesa for local convenience.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-20 px-6 lg:px-8 bg-gray-50/50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16 scroll-reveal">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-brand-dark mb-6">
+              How It <span className="text-brand-primary">Works</span>
+            </h2>
+            <p className="text-lg md:text-xl text-brand-light-gray max-w-3xl mx-auto">
+              Get started with ProHealth Connect in three simple steps
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+            {/* Step 1 */}
+            <div className="text-center scroll-reveal">
+              <div className="relative">
+                <div className="w-20 h-20 bg-brand-primary rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Search className="w-10 h-10 text-brand-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-brand-primary-hover rounded-full flex items-center justify-center text-brand-white font-bold text-sm">
+                  1
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-brand-dark mb-4">Sign Up / Explore</h3>
+              <p className="text-brand-light-gray leading-relaxed">
+                Create your account or explore our AI tools to get started on your wellness journey.
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="text-center scroll-reveal">
+              <div className="relative">
+                <div className="w-20 h-20 bg-brand-primary rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CreditCard className="w-10 h-10 text-brand-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-brand-primary-hover rounded-full flex items-center justify-center text-brand-white font-bold text-sm">
+                  2
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-brand-dark mb-4">Book & Pay</h3>
+              <p className="text-brand-light-gray leading-relaxed">
+                Choose a service and pay securely online using your preferred payment method.
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="text-center scroll-reveal">
+              <div className="relative">
+                <div className="w-20 h-20 bg-brand-primary rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Users className="w-10 h-10 text-brand-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-brand-primary-hover rounded-full flex items-center justify-center text-brand-white font-bold text-sm">
+                  3
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-brand-dark mb-4">Connect & Thrive</h3>
+              <p className="text-brand-light-gray leading-relaxed">
+                Access your services and health insights to maintain and improve your wellness.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final Call-to-Action Section */}
+      <section className="py-20 px-6 lg:px-8 bg-gradient-to-r from-brand-primary/5 to-brand-primary/10">
+        <div className="max-w-4xl mx-auto text-center scroll-reveal">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-brand-dark mb-6">
+            Ready to Take Control of Your <span className="text-brand-primary">Wellness Journey?</span>
+          </h2>
+          <p className="text-lg md:text-xl text-brand-light-gray mb-8 max-w-2xl mx-auto">
+            Join thousands of users who trust ProHealth Connect for their health and wellness needs.
+          </p>
+          <Button
+            size="lg"
+            className="bg-brand-primary hover:bg-brand-primary-hover text-brand-white px-12 py-6 text-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
+          >
+            Get Started with ProHealth Connect
+          </Button>
+        </div>
+      </section>
     </div>
-  );
+  )
 }
