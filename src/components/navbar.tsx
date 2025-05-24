@@ -4,16 +4,26 @@ import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const router = useRouter()
 
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/services", label: "Services" },
     { href: "/ai-assistant", label: "AI Assistant" },
-    { href: "/bookings", label: "My Bookings" },
+    { href: "/dashboard/bookings", label: "My Bookings" },
   ]
+
+  const handleLogin = () => {
+    router.push("/login")
+  }
+
+  const handleSignUp = () => {
+    router.push("/signup")
+  }
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-brand-white border-b border-brand-light-gray/30 shadow-sm">
@@ -46,10 +56,14 @@ export default function Navbar() {
             <Button
               variant="outline"
               className="border-brand-primary text-brand-primary hover:bg-brand-primary/10 hover:text-brand-primary-hover transition-all duration-200"
+              onClick={handleLogin}
             >
               Login
             </Button>
-            <Button className="bg-brand-primary hover:bg-brand-primary-hover text-brand-white transition-all duration-200">
+            <Button 
+              className="bg-brand-primary hover:bg-brand-primary-hover text-brand-white transition-all duration-200"
+              onClick={handleSignUp}
+            >
               Sign Up
             </Button>
           </div>
@@ -78,10 +92,19 @@ export default function Navbar() {
                 </Link>
               ))}
               <div className="flex flex-col space-y-3 pt-4 border-t border-brand-light-gray/30">
-                <Button variant="outline" className="border-brand-primary text-brand-primary hover:bg-brand-primary/10">
+                <Button 
+                  variant="outline" 
+                  className="border-brand-primary text-brand-primary hover:bg-brand-primary/10"
+                  onClick={handleLogin}
+                >
                   Login
                 </Button>
-                <Button className="bg-brand-primary hover:bg-brand-primary-hover text-brand-white">Sign Up</Button>
+                <Button 
+                  className="bg-brand-primary hover:bg-brand-primary-hover text-brand-white"
+                  onClick={handleSignUp}
+                >
+                  Sign Up
+                </Button>
               </div>
             </div>
           </div>

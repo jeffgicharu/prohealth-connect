@@ -31,7 +31,11 @@ export default function AIAssistantPage() {
     return () => observerRef.current?.disconnect()
   }, [])
 
-  const handleGetInsights = () => {
+  const handleGetInsights = (e: React.FormEvent) => {
+    e.preventDefault()
+    console.log("AI Assistant button clicked")
+    console.log("User input:", symptoms)
+    
     setIsLoading(true)
     // Simulate API call
     setTimeout(() => {
@@ -77,25 +81,27 @@ export default function AIAssistantPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="symptoms" className="text-brand-dark font-medium">
-                  Describe your symptoms or health query:
-                </Label>
-                <Textarea
-                  id="symptoms"
-                  placeholder="e.g., I've had a persistent cough and mild fever for three days..."
-                  value={symptoms}
-                  onChange={(e) => setSymptoms(e.target.value)}
-                  className="min-h-32 border-brand-light-gray/30 focus:border-brand-primary resize-none"
-                />
-              </div>
-              <Button
-                onClick={handleGetInsights}
-                disabled={!symptoms.trim() || isLoading}
-                className="w-full bg-brand-primary hover:bg-brand-primary-hover text-brand-white py-3 text-lg font-semibold transition-all duration-200"
-              >
-                {isLoading ? "Analyzing..." : "Get AI Insights"}
-              </Button>
+              <form onSubmit={handleGetInsights} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="symptoms" className="text-brand-dark font-medium">
+                    Describe your symptoms or health query:
+                  </Label>
+                  <Textarea
+                    id="symptoms"
+                    placeholder="e.g., I've had a persistent cough and mild fever for three days..."
+                    value={symptoms}
+                    onChange={(e) => setSymptoms(e.target.value)}
+                    className="min-h-32 border-brand-light-gray/30 focus:border-brand-primary resize-none"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={!symptoms.trim() || isLoading}
+                  className="w-full bg-brand-primary hover:bg-brand-primary-hover text-brand-white py-3 text-lg font-semibold transition-all duration-200"
+                >
+                  {isLoading ? "Analyzing..." : "Get AI Insights"}
+                </Button>
+              </form>
             </CardContent>
           </Card>
 

@@ -1,12 +1,26 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Brain, Calendar, Shield, Search, CreditCard, Users } from "lucide-react"
 
 export default function HomePage() {
+  const router = useRouter()
   const observerRef = useRef<IntersectionObserver | null>(null)
+
+  const handleExploreServices = () => {
+    router.push("/services")
+  }
+
+  const handleTryAIAssistant = () => {
+    router.push("/ai-assistant")
+  }
+
+  const handleGetStarted = () => {
+    router.push("/signup")
+  }
 
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
@@ -43,6 +57,7 @@ export default function HomePage() {
               <Button
                 size="lg"
                 className="bg-brand-primary hover:bg-brand-primary-hover text-brand-white px-8 py-4 text-lg font-semibold transition-all duration-200 transform hover:scale-105"
+                onClick={handleExploreServices}
               >
                 Explore Our Services
               </Button>
@@ -50,6 +65,7 @@ export default function HomePage() {
                 size="lg"
                 variant="outline"
                 className="border-brand-primary text-brand-primary hover:bg-brand-primary/10 px-8 py-4 text-lg font-semibold transition-all duration-200 transform hover:scale-105"
+                onClick={handleTryAIAssistant}
               >
                 Try AI Assistant
               </Button>
@@ -190,6 +206,7 @@ export default function HomePage() {
           <Button
             size="lg"
             className="bg-brand-primary hover:bg-brand-primary-hover text-brand-white px-12 py-6 text-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
+            onClick={handleGetStarted}
           >
             Get Started with ProHealth Connect
           </Button>

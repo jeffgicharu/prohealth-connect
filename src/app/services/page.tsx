@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -8,7 +8,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Heart, Brain, Dumbbell, Stethoscope, Search } from "lucide-react"
 
 export default function ServicesPage() {
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [selectedPriceRange, setSelectedPriceRange] = useState("all")
   const observerRef = useRef<IntersectionObserver | null>(null)
+
+  const handleViewDetails = (serviceId: number, serviceTitle: string) => {
+    console.log(`View Details clicked for Service: ${serviceTitle} (ID: ${serviceId})`)
+  }
+
+  const handleBookNow = (serviceId: number, serviceTitle: string) => {
+    console.log(`Book Now clicked for Service: ${serviceTitle} (ID: ${serviceId})`)
+  }
+
+  const handleLoadMore = () => {
+    console.log("Load More Services button clicked")
+  }
 
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
@@ -86,9 +101,11 @@ export default function ServicesPage() {
                 <Input
                   placeholder="Search services..."
                   className="pl-10 h-12 border-brand-light-gray/30 focus:border-brand-primary"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Select>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="w-full md:w-48 h-12 border-brand-light-gray/30">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
@@ -100,7 +117,7 @@ export default function ServicesPage() {
                   <SelectItem value="general">General Health</SelectItem>
                 </SelectContent>
               </Select>
-              <Select>
+              <Select value={selectedPriceRange} onValueChange={setSelectedPriceRange}>
                 <SelectTrigger className="w-full md:w-48 h-12 border-brand-light-gray/30">
                   <SelectValue placeholder="Price Range" />
                 </SelectTrigger>
@@ -140,10 +157,14 @@ export default function ServicesPage() {
                 <Button
                   variant="outline"
                   className="w-full border-brand-primary text-brand-primary hover:bg-brand-primary/10 transition-all duration-200"
+                  onClick={() => handleViewDetails(service.id, service.title)}
                 >
                   View Details
                 </Button>
-                <Button className="w-full bg-brand-primary hover:bg-brand-primary-hover text-brand-white transition-all duration-200">
+                <Button 
+                  className="w-full bg-brand-primary hover:bg-brand-primary-hover text-brand-white transition-all duration-200"
+                  onClick={() => handleBookNow(service.id, service.title)}
+                >
                   Book Now
                 </Button>
               </CardFooter>
@@ -157,6 +178,7 @@ export default function ServicesPage() {
             variant="outline"
             size="lg"
             className="border-brand-primary text-brand-primary hover:bg-brand-primary/10 px-8"
+            onClick={handleLoadMore}
           >
             Load More Services
           </Button>
