@@ -1,5 +1,6 @@
-import { NextAuthOptions, Session } from 'next-auth';
+import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import prisma from '@/lib/prisma'; // Import your Prisma client instance
 import bcrypt from 'bcryptjs';
 
@@ -15,6 +16,7 @@ declare module 'next-auth' {
 }
 
 export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -56,26 +58,19 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   session: {
-    strategy: "jwt", // We'll change this to "database" with PrismaAdapter
+    strategy: "database",
   },
   pages: {
     signIn: '/login',
   },
   // Add callbacks if needed, e.g., to include more user data in JWT/session
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        // token.role = user.role; // If you add roles
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        // session.user.role = token.role; // If you add roles
+    async session({ session, user }) {
+      if (session.user && user) {
+        session.user.id = user.id;
       }
       return session;
     },
   },
+  debug: process.env.NODE_ENV === 'development',
 };
