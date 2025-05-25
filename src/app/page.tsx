@@ -195,8 +195,8 @@ export default function HomePage() {
       </section>
 
       {/* Final Call-to-Action Section */}
-      <section className="py-20 px-6 lg:px-8 bg-gradient-to-r from-brand-primary/5 to-brand-primary/10">
-        <div className="max-w-4xl mx-auto text-center scroll-reveal">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-brand-primary/5 to-brand-primary/10">
+        <div className="max-w-md sm:max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto text-center scroll-reveal">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-brand-dark mb-6">
             Ready to Take Control of Your <span className="text-brand-primary">Wellness Journey?</span>
           </h2>
@@ -205,7 +205,7 @@ export default function HomePage() {
           </p>
           <Button
             size="lg"
-            className="bg-brand-primary hover:bg-brand-primary-hover text-brand-white px-12 py-6 text-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
+            className="w-full max-w-full bg-brand-primary hover:bg-brand-primary-hover text-brand-white px-4 py-6 font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg whitespace-normal text-base sm:text-lg md:text-xl"
             onClick={handleGetStarted}
           >
             Get Started with ProHealth Connect

@@ -31,11 +31,13 @@ model User {
 
 model Service {
   id          String  @id @default(cuid())
-  name        String
-  description String?
+  name        String  @unique
+  description String? @db.Text
   price       Float
   duration    Int?
+  category    String?
   imageUrl    String?
+  practitionerName String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

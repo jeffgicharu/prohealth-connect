@@ -11,7 +11,19 @@ declare module 'next-auth' {
       name?: string | null;
       email?: string | null;
       image?: string | null;
+      role?: string | null;
+      emailVerified?: Date | null;
     };
+  }
+}
+
+// Extend the User type to include our custom fields
+declare module 'next-auth' {
+  interface User {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    emailVerified?: Date | null;
   }
 }
 
@@ -48,7 +60,12 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid credentials");
         }
 
-        return user;
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          emailVerified: user.emailVerified,
+        };
       }
     })
   ],
@@ -58,6 +75,28 @@ export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development',
   session: {
     strategy: 'jwt',
+  },
+  callbacks: {
+    async jwt({ token, user, account }) {
+      if (user) {
+        // Initial sign in
+        token.id = user.id;
+        token.email = user.email;
+        token.name = user.name;
+        token.emailVerified = user.emailVerified;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session?.user) {
+        session.user.id = token.id as string;
+        session.user.emailVerified = token.emailVerified as Date | null;
+      }
+      return session;
+    },
+  },
+  jwt: {
+    maxAge: 60 * 60 * 24 * 30, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
