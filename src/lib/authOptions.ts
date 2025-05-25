@@ -1,7 +1,7 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { PrismaAdapter } from '@next-auth/prisma-adapter';
-import prisma from '@/lib/prisma'; // Import your Prisma client instance
+import { PrismaAdapter } from '@auth/prisma-adapter';
+import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
 declare module 'next-auth' {
@@ -19,58 +19,45 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
-      name: 'Credentials',
+      name: 'credentials',
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials, req) {
+      async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email and password are required");
-        }
-
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        });
-
-        if (!user || !user.password) {
-          // User not found or password not set (should not happen with proper signup)
           throw new Error("Invalid credentials");
         }
 
-        const isPasswordValid = await bcrypt.compare(
+        const user = await prisma.user.findUnique({
+          where: {
+            email: credentials.email
+          }
+        });
+
+        if (!user || !user?.password) {
+          throw new Error("Invalid credentials");
+        }
+
+        const isCorrectPassword = await bcrypt.compare(
           credentials.password,
           user.password
         );
 
-        if (!isPasswordValid) {
+        if (!isCorrectPassword) {
           throw new Error("Invalid credentials");
         }
 
-        // Return user object without the password
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          // Add any other user properties you want in the session/token
-        };
+        return user;
       }
     })
   ],
-  session: {
-    strategy: "database",
-  },
   pages: {
     signIn: '/login',
   },
-  // Add callbacks if needed, e.g., to include more user data in JWT/session
-  callbacks: {
-    async session({ session, user }) {
-      if (session.user && user) {
-        session.user.id = user.id;
-      }
-      return session;
-    },
-  },
   debug: process.env.NODE_ENV === 'development',
+  session: {
+    strategy: 'jwt',
+  },
+  secret: process.env.NEXTAUTH_SECRET,
 };

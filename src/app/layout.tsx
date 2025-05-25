@@ -2,8 +2,9 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Poppins } from "next/font/google"
 import "./globals.css"
-import Navbar from "@/components/navbar"
-import Footer from "@/components/footer"
+import Navbar from "@/components/shared/Navbar"
+import Footer from "@/components/shared/Footer"
+import SessionProviderWrapper from "@/components/providers/SessionProviderWrapper"
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -25,9 +26,11 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${poppins.variable} font-sans`}>
         <div className="min-h-screen flex flex-col">
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <SessionProviderWrapper>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </SessionProviderWrapper>
         </div>
       </body>
     </html>
