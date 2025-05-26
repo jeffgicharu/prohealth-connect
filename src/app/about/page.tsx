@@ -73,7 +73,7 @@ export default function AboutPage() {
             About <span className="text-brand-primary">ProHealth Connect</span>
           </h1>
           <p className="text-lg md:text-xl text-brand-light-gray max-w-3xl mx-auto leading-relaxed">
-            Transforming healthcare through technology, compassion, and innovation. We're building the future of
+            Transforming healthcare through technology, compassion, and innovation. We&apos;re building the future of
             accessible, personalized wellness services.
           </p>
         </div>

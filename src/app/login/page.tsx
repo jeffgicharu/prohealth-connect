@@ -37,7 +37,7 @@ export default function LoginPage() {
       } else if (result?.ok) {
         router.push(callbackUrl)
       }
-    } catch (err: any) {
+    } catch {
       setError("An unexpected error occurred.")
     } finally {
       setIsLoading(false)

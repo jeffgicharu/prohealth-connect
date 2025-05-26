@@ -79,7 +79,7 @@ export default function ContactPage() {
             Contact <span className="text-brand-primary">Us</span>
           </h1>
           <p className="text-lg md:text-xl text-brand-light-gray max-w-3xl mx-auto">
-            We're here to help! Reach out to us with any questions, concerns, or feedback about our services.
+            We&apos;re here to help! Reach out to us with any questions, concerns, or feedback about our services.
           </p>
         </div>
 
@@ -114,7 +114,7 @@ export default function ContactPage() {
               <CardContent className="p-6">
                 <h3 className="font-semibold text-red-800 mb-2">Medical Emergency?</h3>
                 <p className="text-red-700 text-sm">
-                  If you're experiencing a medical emergency, please call emergency services immediately at 999 or visit
+                  If you&apos;re experiencing a medical emergency, please call emergency services immediately at 999 or visit
                   your nearest emergency room. This contact form is not monitored 24/7 and should not be used for urgent
                   medical situations.
                 </p>
@@ -128,7 +128,7 @@ export default function ContactPage() {
               <CardHeader>
                 <CardTitle className="text-2xl font-bold text-brand-dark">Send us a Message</CardTitle>
                 <p className="text-brand-light-gray">
-                  Fill out the form below and we'll get back to you as soon as possible.
+                  Fill out the form below and we&apos;ll get back to you as soon as possible.
                 </p>
               </CardHeader>
               <CardContent>

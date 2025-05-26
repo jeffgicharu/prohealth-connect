@@ -1,5 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 
+declare global {
+  var prisma: PrismaClient | undefined;
+}
+
 let prisma: PrismaClient;
 
 if (process.env.NODE_ENV === 'production') {
@@ -7,12 +11,9 @@ if (process.env.NODE_ENV === 'production') {
 } else {
   // Ensure the prisma instance is re-used during hot-reloading
   // Prevents creating too many connections in development
-  // @ts-ignore
   if (!global.prisma) {
-    // @ts-ignore
     global.prisma = new PrismaClient();
   }
-  // @ts-ignore
   prisma = global.prisma;
 }
 
