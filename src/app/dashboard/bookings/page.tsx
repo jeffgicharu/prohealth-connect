@@ -36,11 +36,11 @@ interface BookingCardProps {
 }
 
 function BookingCard({ booking }: BookingCardProps) {
-  const getStatusVariant = (status: string) => {
+  const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (status.toUpperCase()) {
       case "CONFIRMED":
       case "PAID":
-        return "success";
+        return "default"; // Changed from "success" to "default"
       case "PENDING":
       case "UNPAID":
         return "secondary";

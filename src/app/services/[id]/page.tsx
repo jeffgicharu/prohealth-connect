@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Briefcase, Clock, UserCircle, DollarSign } from 'lucide-react';
 
-export default async function ServiceDetailPage({ params }: { params: { id: string } }) {
-  const serviceId = params.id;
-  const service = await getServiceById(serviceId);
+export default async function ServiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const service = await getServiceById(id);
 
   if (!service) {
     notFound(); // Triggers the not-found.tsx page or a default 404
@@ -73,4 +73,4 @@ export default async function ServiceDetailPage({ params }: { params: { id: stri
       </div>
     </div>
   );
-} 
+}
