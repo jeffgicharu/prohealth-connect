@@ -21,7 +21,7 @@ export async function getServiceById(serviceId: string) {
     });
     return service;
   } catch (error) {
-    console.error(`Error fetching service with ID ${serviceId}:", error);
+    console.error(`Error fetching service with ID ${serviceId}:`, error);
     throw new Error("Failed to fetch service details.");
   }
 } 
