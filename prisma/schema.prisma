@@ -67,8 +67,8 @@ model Transaction {
   bookingId           String   @unique
   amount              Float
   currency            String   @default("KES")
-  paymentGateway      String
-  gatewayTransactonId String?
+  paymentGateway      String   @default("STRIPE")
+  gatewayTransactionId String?
   status              String
 
   booking Booking @relation(fields: [bookingId], references: [id])
