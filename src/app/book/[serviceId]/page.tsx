@@ -36,6 +36,7 @@ export default function BookServicePage() {
           const data = await res.json();
           setService(data);
         } catch (err) {
+          console.error('Error fetching service:', err);
           setError("Failed to load service details.");
         } finally {
           setIsLoading(false);
