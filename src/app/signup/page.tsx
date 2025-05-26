@@ -44,7 +44,7 @@ export default function SignupPage() {
     const newPassword = e.target.value;
     setPassword(newPassword);
     const validation = validatePassword(newPassword);
-    setPasswordError(validation.isValid ? null : validation.error);
+    setPasswordError(validation.isValid ? null : validation.error ?? null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,8 +84,12 @@ export default function SignupPage() {
       setTimeout(() => {
         router.push('/login')
       }, 2000)
-    } catch (err: Error) {
-      setError(err.message)
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError('An unknown error occurred.')
+      }
     } finally {
       setIsLoading(false)
     }
