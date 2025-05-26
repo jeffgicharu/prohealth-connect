@@ -106,11 +106,12 @@ export async function POST(request: Request) {
         message: 'Payment failed. Please try again or contact support.',
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error verifying payment:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to verify payment';
     return NextResponse.json(
-      { error: error.message || 'Failed to verify payment' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
-} 
+}

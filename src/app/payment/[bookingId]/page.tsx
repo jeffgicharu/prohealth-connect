@@ -14,10 +14,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 // CheckoutForm component
-function CheckoutForm({ clientSecret, bookingId, bookingAmount }: { clientSecret: string, bookingId: string, bookingAmount: number }) {
+function CheckoutForm({ bookingId, bookingAmount }: { bookingId: string, bookingAmount: number }) {
   const stripe = useStripe();
   const elements = useElements();
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -32,7 +31,7 @@ function CheckoutForm({ clientSecret, bookingId, bookingAmount }: { clientSecret
       return;
     }
 
-    const { error, paymentIntent } = await stripe.confirmPayment({
+    const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
         return_url: `${window.location.origin}/payment/status?booking_id=${bookingId}`,
@@ -102,9 +101,10 @@ export default function PaymentPage() {
         setClientSecret(data.clientSecret);
         setBookingAmount(data.bookingAmount);
       })
-      .catch((err: any) => {
+      .catch((err: unknown) => {
         console.error("Error fetching client secret:", err);
-        setError(err.message || "Could not initialize payment. Please try again.");
+        const errorMessage = err instanceof Error ? err.message : "Could not initialize payment. Please try again.";
+        setError(errorMessage);
       })
       .finally(() => setLoading(false));
     } else if (status === 'loading') {
@@ -167,7 +167,6 @@ export default function PaymentPage() {
         <CardContent>
           <Elements options={options} stripe={stripePromise}>
             <CheckoutForm 
-              clientSecret={clientSecret} 
               bookingId={bookingId} 
               bookingAmount={bookingAmount} 
             />
@@ -176,4 +175,4 @@ export default function PaymentPage() {
       </Card>
     </div>
   );
-} 
+}

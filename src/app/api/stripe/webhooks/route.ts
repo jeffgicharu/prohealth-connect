@@ -19,9 +19,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Webhook signature missing' }, { status: 400 });
     }
     event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
-  } catch (err: any) {
-    console.error(`⚠️  Webhook signature verification failed: ${err.message}`);
-    return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    console.error(`⚠️  Webhook signature verification failed: ${errorMessage}`);
+    return NextResponse.json({ error: `Webhook Error: ${errorMessage}` }, { status: 400 });
   }
 
   // Handle the event
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
 
       try {
         // Update Booking status
-        const updatedBooking = await prisma.booking.update({
+        await prisma.booking.update({
           where: { id: bookingId },
           data: {
             paymentStatus: 'PAID',
@@ -178,4 +179,4 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ received: true });
-} 
+}
