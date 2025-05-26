@@ -133,7 +133,7 @@ export default function AIAssistantPage() {
                   <div className="p-4 bg-brand-primary/5 rounded-lg border border-brand-primary/20">
                     <h4 className="font-semibold text-brand-dark mb-2">General Information:</h4>
                     <p className="text-brand-dark leading-relaxed">
-                      Your AI-generated insights will appear here based on the symptoms you've described. The AI will
+                      Your AI-generated insights will appear here based on the symptoms you&apos;ve described. The AI will
                       provide general health information and educational content.
                     </p>
                   </div>

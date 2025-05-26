@@ -84,7 +84,7 @@ export default function SignupPage() {
       setTimeout(() => {
         router.push('/login')
       }, 2000)
-    } catch (err: any) {
+    } catch (err: Error) {
       setError(err.message)
     } finally {
       setIsLoading(false)
