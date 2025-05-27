@@ -52,6 +52,7 @@ model Booking {
   bookingDate   DateTime
   status        String   @default("PENDING")
   paymentStatus String   @default("UNPAID")
+  gatewayCheckoutId String? @unique
 
   user    User    @relation(fields: [userId], references: [id])
   service Service @relation(fields: [serviceId], references: [id])
