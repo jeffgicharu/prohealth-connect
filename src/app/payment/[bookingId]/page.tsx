@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
 // recreating the `Stripe` object on every render.
@@ -75,6 +77,9 @@ export default function PaymentPage() {
   const [bookingAmount, setBookingAmount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mpesaPhoneNumber, setMpesaPhoneNumber] = useState('');
+  const [isMpesaLoading, setIsMpesaLoading] = useState(false);
+  const [mpesaMessage, setMpesaMessage] = useState<string | null>(null);
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -114,6 +119,31 @@ export default function PaymentPage() {
       setLoading(false);
     }
   }, [bookingId, status, session, router]);
+
+  const handleMpesaPayment = async () => {
+    if (!mpesaPhoneNumber.match(/^254\d{9}$/)) {
+      setMpesaMessage("Please enter a valid M-Pesa number (e.g., 254712345678).");
+      return;
+    }
+    setIsMpesaLoading(true);
+    setMpesaMessage(null);
+    try {
+      const response = await fetch('/api/mpesa/stk-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId, phoneNumber: mpesaPhoneNumber }),
+      });
+      const data = await response.json();
+      if (!response.ok || data.ResponseCode !== "0") {
+        throw new Error(data.errorMessage || data.CustomerMessage || 'Failed to initiate M-Pesa payment.');
+      }
+      setMpesaMessage(`STK Push sent to ${mpesaPhoneNumber}. Please enter your M-Pesa PIN on your phone to authorize the payment of Ksh ${bookingAmount.toFixed(2)}.`);
+    } catch (err: any) {
+      setMpesaMessage(err.message);
+    } finally {
+      setIsMpesaLoading(false);
+    }
+  };
 
   if (status === 'loading' || loading) {
     return (
@@ -165,12 +195,43 @@ export default function PaymentPage() {
           <CardTitle className="text-2xl font-bold text-center">Complete Your Payment</CardTitle>
         </CardHeader>
         <CardContent>
-          <Elements options={options} stripe={stripePromise}>
-            <CheckoutForm 
-              bookingId={bookingId} 
-              bookingAmount={bookingAmount} 
-            />
-          </Elements>
+          <Tabs defaultValue="card" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="card">Card Payment</TabsTrigger>
+              <TabsTrigger value="mpesa">M-Pesa</TabsTrigger>
+            </TabsList>
+            <TabsContent value="card">
+              <Elements options={options} stripe={stripePromise}>
+                <CheckoutForm 
+                  bookingId={bookingId} 
+                  bookingAmount={bookingAmount} 
+                />
+              </Elements>
+            </TabsContent>
+            <TabsContent value="mpesa">
+              <div className="space-y-4">
+                <Input 
+                  type="tel" 
+                  placeholder="M-Pesa Number (e.g., 254712345678)" 
+                  value={mpesaPhoneNumber}
+                  onChange={(e) => setMpesaPhoneNumber(e.target.value)}
+                  disabled={isMpesaLoading}
+                />
+                <Button
+                  onClick={handleMpesaPayment}
+                  disabled={isMpesaLoading || !mpesaPhoneNumber}
+                  className="w-full bg-green-600 text-white hover:bg-green-700 py-3 text-lg"
+                >
+                  {isMpesaLoading ? "Initiating..." : `Pay Ksh ${bookingAmount.toFixed(2)} with M-Pesa`}
+                </Button>
+                {mpesaMessage && (
+                  <Alert variant={mpesaMessage.includes('Failed') ? "destructive" : "default"}>
+                    <AlertDescription>{mpesaMessage}</AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
