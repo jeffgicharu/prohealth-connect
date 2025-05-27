@@ -59,7 +59,12 @@ export async function POST(request: Request) {
     const timestamp = getTimestamp();
     const password = Buffer.from(`${shortCode}${passkey}${timestamp}`).toString('base64');
 
-    const callBackURL = `${process.env.NEXTAUTH_URL}/api/mpesa/stk-callback`;
+    // Use MPESA_PUBLIC_BASE_URL for local development, NEXTAUTH_URL for production
+    const publicBaseUrl = process.env.NODE_ENV === 'production'
+      ? process.env.NEXTAUTH_URL
+      : process.env.MPESA_PUBLIC_BASE_URL;
+    
+    const callBackURL = `${publicBaseUrl}/api/mpesa/stk-callback`;
 
     const payload = {
       BusinessShortCode: shortCode,

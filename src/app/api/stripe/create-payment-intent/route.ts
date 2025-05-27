@@ -61,20 +61,6 @@ export async function POST(request: Request) {
     console.log(`✅ PaymentIntent created: ${paymentIntent.id}`);
     console.log(`📝 PaymentIntent metadata:`, paymentIntent.metadata);
 
-    // 3. Create a pending transaction record
-    await prisma.transaction.create({
-      data: {
-        bookingId: booking.id,
-        amount: booking.service.price,
-        currency: 'KES',
-        paymentGateway: 'STRIPE',
-        gatewayTransactionId: paymentIntent.id,
-        status: 'pending',
-      },
-    });
-
-    console.log(`✅ Transaction record created for booking: ${booking.id}`);
-
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       bookingAmount: booking.service.price,
