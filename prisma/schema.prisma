@@ -67,7 +67,7 @@ model Transaction {
   bookingId           String   @unique
   amount              Float
   currency            String   @default("KES")
-  paymentGateway      String   @default("STRIPE")
+  paymentGateway      String   @default("MPESA")
   gatewayTransactionId String?
   status              String
 
