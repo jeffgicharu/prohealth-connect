@@ -1,11 +1,38 @@
 import { NextResponse } from 'next/server';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/authOptions';
 import { getMpesaAccessToken } from '@/app/actions/mpesaActions';
 
 const MPESA_STK_PUSH_URL = 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest';
+
+interface STKPushPayload {
+  BusinessShortCode: string;
+  Password: string;
+  Timestamp: string;
+  TransactionType: string;
+  Amount: string;
+  PartyA: string;
+  PartyB: string;
+  PhoneNumber: string;
+  CallBackURL: string;
+  AccountReference: string;
+  TransactionDesc: string;
+}
+
+interface STKPushResponse {
+  CheckoutRequestID?: string;
+  MerchantRequestID?: string;
+  ResponseCode?: string;
+  ResponseDescription?: string;
+  CustomerMessage?: string;
+}
+
+interface MpesaErrorResponse {
+  errorMessage?: string;
+  errorCode?: string;
+}
 
 function getTimestamp() {
   const date = new Date();
@@ -66,7 +93,7 @@ export async function POST(request: Request) {
     
     const callBackURL = `${publicBaseUrl}/api/mpesa/stk-callback`;
 
-    const payload = {
+    const payload: STKPushPayload = {
       BusinessShortCode: shortCode,
       Password: password,
       Timestamp: timestamp,
@@ -80,7 +107,7 @@ export async function POST(request: Request) {
       TransactionDesc: `Payment for Booking ${bookingId.substring(0,10)}`,
     };
 
-    const response = await axios.post(MPESA_STK_PUSH_URL, payload, {
+    const response = await axios.post<STKPushResponse>(MPESA_STK_PUSH_URL, payload, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
@@ -96,11 +123,14 @@ export async function POST(request: Request) {
 
     return NextResponse.json(response.data);
 
-  } catch (error: any) {
-    console.error("Error initiating M-Pesa STK Push:", error.response?.data || error.message);
+  } catch (error) {
+    const axiosError = error as AxiosError<MpesaErrorResponse>;
+    const errorMessage = axiosError.response?.data?.errorMessage || axiosError.message || 'Unknown error occurred';
+    
+    console.error("Error initiating M-Pesa STK Push:", axiosError.response?.data || errorMessage);
     return NextResponse.json(
-      { error: error.response?.data?.errorMessage || 'Failed to initiate M-Pesa payment' }, 
+      { error: errorMessage || 'Failed to initiate M-Pesa payment' }, 
       { status: 500 }
     );
   }
-} 
+}

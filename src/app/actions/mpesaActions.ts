@@ -1,6 +1,6 @@
 "use server";
 
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 const MPESA_AUTH_URL = 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials';
 
@@ -12,6 +12,11 @@ let tokenCache: {
   token: null,
   expiresAt: 0
 };
+
+interface MpesaTokenResponse {
+  access_token: string;
+  expires_in: string;
+}
 
 export async function getMpesaAccessToken(): Promise<string | null> {
   const consumerKey = process.env.MPESA_CONSUMER_KEY;
@@ -31,7 +36,7 @@ export async function getMpesaAccessToken(): Promise<string | null> {
   const auth = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
 
   try {
-    const response = await axios.get(MPESA_AUTH_URL, {
+    const response = await axios.get<MpesaTokenResponse>(MPESA_AUTH_URL, {
       headers: {
         'Authorization': `Basic ${auth}`
       }
@@ -44,8 +49,9 @@ export async function getMpesaAccessToken(): Promise<string | null> {
     };
 
     return response.data.access_token;
-  } catch (error: any) {
-    console.error("Error fetching M-Pesa access token:", error.response?.data || error.message);
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    console.error("Error fetching M-Pesa access token:", axiosError.response?.data || axiosError.message);
     return null;
   }
-} 
+}

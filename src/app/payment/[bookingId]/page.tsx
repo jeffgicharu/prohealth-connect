@@ -15,6 +15,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 // recreating the `Stripe` object on every render.
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
+interface PaymentIntentResponse {
+  clientSecret: string;
+  bookingAmount: number;
+}
+
+interface MpesaResponse {
+  ResponseCode: string;
+  errorMessage?: string;
+  CustomerMessage?: string;
+}
+
 // CheckoutForm component
 function CheckoutForm({ bookingId, bookingAmount }: { bookingId: string, bookingAmount: number }) {
   const stripe = useStripe();
@@ -102,7 +113,7 @@ export default function PaymentPage() {
         }
         return res.json();
       })
-      .then((data) => {
+      .then((data: PaymentIntentResponse) => {
         setClientSecret(data.clientSecret);
         setBookingAmount(data.bookingAmount);
       })
@@ -133,13 +144,14 @@ export default function PaymentPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bookingId, phoneNumber: mpesaPhoneNumber }),
       });
-      const data = await response.json();
+      const data: MpesaResponse = await response.json();
       if (!response.ok || data.ResponseCode !== "0") {
         throw new Error(data.errorMessage || data.CustomerMessage || 'Failed to initiate M-Pesa payment.');
       }
       setMpesaMessage(`STK Push sent to ${mpesaPhoneNumber}. Please enter your M-Pesa PIN on your phone to authorize the payment of Ksh ${bookingAmount.toFixed(2)}.`);
-    } catch (err: any) {
-      setMpesaMessage(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setMpesaMessage(errorMessage);
     } finally {
       setIsMpesaLoading(false);
     }

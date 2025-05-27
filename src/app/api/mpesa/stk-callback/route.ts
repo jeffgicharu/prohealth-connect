@@ -1,10 +1,31 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+interface CallbackMetadataItem {
+  Name: string;
+  Value: string | number;
+}
+
+interface STKCallback {
+  MerchantRequestID: string;
+  CheckoutRequestID: string;
+  ResultCode: number;
+  ResultDesc: string;
+  CallbackMetadata?: {
+    Item: CallbackMetadataItem[];
+  };
+}
+
+interface CallbackData {
+  Body?: {
+    stkCallback: STKCallback;
+  };
+}
+
 export async function POST(request: Request) {
   console.log("M-Pesa STK Callback Received");
   try {
-    const callbackData = await request.json();
+    const callbackData: CallbackData = await request.json();
     console.log("Callback Data:", JSON.stringify(callbackData, null, 2));
 
     const stkCallback = callbackData?.Body?.stkCallback;
@@ -14,7 +35,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ ResultCode: 1, ResultDesc: "Failed", ThirdPartyTransID: "" }, { status: 400 });
     }
 
-    const merchantRequestID = stkCallback.MerchantRequestID;
     const checkoutRequestID = stkCallback.CheckoutRequestID;
     const resultCode = stkCallback.ResultCode;
     const resultDesc = stkCallback.ResultDesc;
@@ -36,11 +56,15 @@ export async function POST(request: Request) {
 
     if (resultCode === 0) {
       const callbackMetadata = stkCallback.CallbackMetadata?.Item;
-      let amount, mpesaReceiptNumber;
+      let amount: number | undefined;
+      let mpesaReceiptNumber: string | undefined;
 
       if (callbackMetadata && Array.isArray(callbackMetadata)) {
-        amount = callbackMetadata.find((item: any) => item.Name === 'Amount')?.Value;
-        mpesaReceiptNumber = callbackMetadata.find((item: any) => item.Name === 'MpesaReceiptNumber')?.Value;
+        const amountItem = callbackMetadata.find((item: CallbackMetadataItem) => item.Name === 'Amount');
+        const receiptItem = callbackMetadata.find((item: CallbackMetadataItem) => item.Name === 'MpesaReceiptNumber');
+        
+        amount = amountItem ? Number(amountItem.Value) : undefined;
+        mpesaReceiptNumber = receiptItem ? String(receiptItem.Value) : undefined;
       }
 
       await prisma.$transaction([
@@ -54,7 +78,7 @@ export async function POST(request: Request) {
         prisma.transaction.create({
           data: {
             bookingId: booking.id,
-            amount: Number(amount) || booking.service.price,
+            amount: amount || booking.service.price,
             currency: 'KES',
             paymentGateway: 'MPESA',
             gatewayTransactionId: mpesaReceiptNumber || checkoutRequestID,
@@ -76,8 +100,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ResultCode: 0, ResultDesc: "Accepted", ThirdPartyTransID: "" });
 
-  } catch (error: any) {
-    console.error("Error processing M-Pesa STK Callback:", error);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error("Error processing M-Pesa STK Callback:", errorMessage);
     return NextResponse.json({ ResultCode: 1, ResultDesc: "Failed", ThirdPartyTransID: "" }, { status: 500 });
   }
-} 
+}
