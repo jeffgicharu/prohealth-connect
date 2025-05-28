@@ -83,7 +83,7 @@ export default function SignupPage() {
       // Redirect to login page after a short delay
       setTimeout(() => {
         router.push('/login')
-      }, 2000)
+      }, 100)
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message)

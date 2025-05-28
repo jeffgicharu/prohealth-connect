@@ -1,49 +1,8 @@
 import { NextResponse } from 'next/server';
-import axios, { AxiosError } from 'axios';
-import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/authOptions';
-import { getMpesaAccessToken } from '@/app/actions/mpesaActions';
-
-const MPESA_STK_PUSH_URL = 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest';
-
-interface STKPushPayload {
-  BusinessShortCode: string;
-  Password: string;
-  Timestamp: string;
-  TransactionType: string;
-  Amount: string;
-  PartyA: string;
-  PartyB: string;
-  PhoneNumber: string;
-  CallBackURL: string;
-  AccountReference: string;
-  TransactionDesc: string;
-}
-
-interface STKPushResponse {
-  CheckoutRequestID?: string;
-  MerchantRequestID?: string;
-  ResponseCode?: string;
-  ResponseDescription?: string;
-  CustomerMessage?: string;
-}
-
-interface MpesaErrorResponse {
-  errorMessage?: string;
-  errorCode?: string;
-}
-
-function getTimestamp() {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const day = date.getDate().toString().padStart(2, '0');
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  const seconds = date.getSeconds().toString().padStart(2, '0');
-  return `${year}${month}${day}${hours}${minutes}${seconds}`;
-}
+import { MpesaService } from '@/lib/services/mpesa';
+import prisma from '@/lib/prisma';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -76,60 +35,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Amount must be at least 1 KES' }, { status: 400 });
     }
 
-    const accessToken = await getMpesaAccessToken();
-    if (!accessToken) {
-      return NextResponse.json({ error: 'Failed to get M-Pesa access token' }, { status: 500 });
-    }
+    const mpesaService = MpesaService.getInstance();
+    const response = await mpesaService.initiateSTKPush(bookingId, phoneNumber, amount);
 
-    const shortCode = process.env.MPESA_SHORTCODE!;
-    const passkey = process.env.MPESA_PASSKEY!;
-    const timestamp = getTimestamp();
-    const password = Buffer.from(`${shortCode}${passkey}${timestamp}`).toString('base64');
-
-    // Use MPESA_PUBLIC_BASE_URL for local development, NEXTAUTH_URL for production
-    const publicBaseUrl = process.env.NODE_ENV === 'production'
-      ? process.env.NEXTAUTH_URL
-      : process.env.MPESA_PUBLIC_BASE_URL;
-    
-    const callBackURL = `${publicBaseUrl}/api/mpesa/stk-callback`;
-
-    const payload: STKPushPayload = {
-      BusinessShortCode: shortCode,
-      Password: password,
-      Timestamp: timestamp,
-      TransactionType: process.env.MPESA_TRANSACTION_TYPE!,
-      Amount: amount.toString(),
-      PartyA: phoneNumber,
-      PartyB: shortCode,
-      PhoneNumber: phoneNumber,
-      CallBackURL: callBackURL,
-      AccountReference: bookingId.substring(0, 12),
-      TransactionDesc: `Payment for Booking ${bookingId.substring(0,10)}`,
-    };
-
-    const response = await axios.post<STKPushResponse>(MPESA_STK_PUSH_URL, payload, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (response.data && response.data.CheckoutRequestID) {
+    if (response.CheckoutRequestID) {
       await prisma.booking.update({
         where: { id: bookingId },
-        data: { gatewayCheckoutId: response.data.CheckoutRequestID },
+        data: { gatewayCheckoutId: response.CheckoutRequestID },
       });
     }
 
-    return NextResponse.json(response.data);
+    return NextResponse.json(response);
 
   } catch (error) {
-    const axiosError = error as AxiosError<MpesaErrorResponse>;
-    const errorMessage = axiosError.response?.data?.errorMessage || axiosError.message || 'Unknown error occurred';
-    
-    console.error("Error initiating M-Pesa STK Push:", axiosError.response?.data || errorMessage);
+    console.error("Error initiating M-Pesa STK Push:", error);
     return NextResponse.json(
-      { error: errorMessage || 'Failed to initiate M-Pesa payment' }, 
+      { error: error instanceof Error ? error.message : 'Failed to initiate M-Pesa payment' },
       { status: 500 }
     );
   }

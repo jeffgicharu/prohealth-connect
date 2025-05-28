@@ -25,6 +25,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   bookings      Booking[]
+  aiInteractions AIInteractionLog[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -111,4 +112,18 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model AIInteractionLog {
+  id        String   @id @default(cuid())
+  userId    String
+  input     String   @db.Text
+  response  String   @db.Text
+  status    String   // "SUCCESS" or "ERROR"
+  error     String?  @db.Text
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
 }

@@ -6,11 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Brain, AlertTriangle, Sparkles } from "lucide-react"
+import { Brain, AlertTriangle, Sparkles, Info } from "lucide-react"
+import ReactMarkdown from "react-markdown"
 
 export default function AIAssistantPage() {
   const [symptoms, setSymptoms] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [insight, setInsight] = useState("")
+  const [error, setError] = useState<string | null>(null)
   const observerRef = useRef<IntersectionObserver | null>(null)
 
   useEffect(() => {
@@ -31,16 +34,32 @@ export default function AIAssistantPage() {
     return () => observerRef.current?.disconnect()
   }, [])
 
-  const handleGetInsights = (e: React.FormEvent) => {
+  const handleGetInsights = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("AI Assistant button clicked")
-    console.log("User input:", symptoms)
-    
     setIsLoading(true)
-    // Simulate API call
-    setTimeout(() => {
+    setError(null)
+    setInsight("")
+
+    try {
+      const response = await fetch('/api/ai/get-symptom-insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symptoms }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to get insights.')
+      }
+
+      setInsight(data.insight)
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
+      setError(errorMessage)
+    } finally {
       setIsLoading(false)
-    }, 2000)
+    }
   }
 
   return (
@@ -60,7 +79,7 @@ export default function AIAssistantPage() {
           </p>
         </div>
 
-        {/* Disclaimer Alert */}
+        {/* Primary Disclaimer Alert */}
         <Alert className="mb-8 scroll-reveal border-yellow-200 bg-yellow-50">
           <AlertTriangle className="h-5 w-5 text-yellow-600" />
           <AlertDescription className="text-yellow-800 font-medium">
@@ -92,6 +111,7 @@ export default function AIAssistantPage() {
                     value={symptoms}
                     onChange={(e) => setSymptoms(e.target.value)}
                     className="min-h-32 border-brand-light-gray/30 focus:border-brand-primary resize-none"
+                    disabled={isLoading}
                   />
                 </div>
                 <Button
@@ -99,7 +119,19 @@ export default function AIAssistantPage() {
                   disabled={!symptoms.trim() || isLoading}
                   className="w-full bg-brand-primary hover:bg-brand-primary-hover text-brand-white py-3 text-lg font-semibold transition-all duration-200"
                 >
-                  {isLoading ? "Analyzing..." : "Get AI Insights"}
+                  {isLoading ? (
+                    <div className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Getting Insights...
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center">
+                      <Sparkles size={20} className="mr-2" /> Get Insights
+                    </div>
+                  )}
                 </Button>
               </form>
             </CardContent>
@@ -111,7 +143,14 @@ export default function AIAssistantPage() {
               <CardTitle className="text-2xl font-bold text-brand-dark">AI Insights</CardTitle>
             </CardHeader>
             <CardContent>
-              {!symptoms.trim() ? (
+              {error ? (
+                <Alert className="bg-red-50 border-red-200">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                  <AlertDescription className="text-red-800">
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              ) : !symptoms.trim() ? (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-brand-light-gray/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Brain className="w-8 h-8 text-brand-light-gray" />
@@ -128,24 +167,39 @@ export default function AIAssistantPage() {
                   <p className="text-brand-dark font-medium">Analyzing your symptoms...</p>
                   <p className="text-brand-light-gray text-sm mt-2">This may take a few moments</p>
                 </div>
-              ) : (
+              ) : insight ? (
                 <div className="space-y-4">
+                  {/* Secondary Disclaimer */}
+                  <Alert className="bg-blue-50 border-blue-200">
+                    <Info className="h-5 w-5 text-blue-600" />
+                    <AlertDescription className="text-blue-800 text-sm">
+                      <strong>Note:</strong> The information below is for educational purposes only and should not be used as a substitute for professional medical advice.
+                    </AlertDescription>
+                  </Alert>
+
+                  {/* AI Response */}
                   <div className="p-4 bg-brand-primary/5 rounded-lg border border-brand-primary/20">
-                    <h4 className="font-semibold text-brand-dark mb-2">General Information:</h4>
-                    <p className="text-brand-dark leading-relaxed">
-                      Your AI-generated insights will appear here based on the symptoms you&apos;ve described. The AI will
-                      provide general health information and educational content.
-                    </p>
+                    <div className="prose prose-sm max-w-none max-h-[400px] overflow-y-auto">
+                      <div className="text-brand-dark leading-relaxed">
+                        <ReactMarkdown>
+                          {insight}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Final Disclaimer */}
                   <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                    <h4 className="font-semibold text-yellow-800 mb-2">Recommendation:</h4>
+                    <h4 className="font-semibold text-yellow-800 mb-2 flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5" />
+                      Important Reminder
+                    </h4>
                     <p className="text-yellow-700 leading-relaxed">
-                      For persistent or concerning symptoms, please consult with a healthcare professional for proper
-                      evaluation and treatment.
+                      This AI assistant provides general information only. For any health concerns, persistent symptoms, or before making any health-related decisions, please consult with a qualified healthcare professional. Your health and safety are our top priority.
                     </p>
                   </div>
                 </div>
-              )}
+              ) : null}
             </CardContent>
           </Card>
         </div>

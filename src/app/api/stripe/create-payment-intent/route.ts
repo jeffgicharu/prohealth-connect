@@ -1,16 +1,11 @@
 import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
-import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/authOptions';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-04-30.basil',
-});
+import { StripeService } from '@/lib/services/stripe';
+import prisma from '@/lib/prisma';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
@@ -23,54 +18,36 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Booking ID is required' }, { status: 400 });
     }
 
-    console.log(`🔍 Creating PaymentIntent for booking: ${bookingId}`);
-
-    // 1. Fetch the booking to get the amount and ensure it's unpaid
     const booking = await prisma.booking.findUnique({
-      where: { id: bookingId, userId: session.user.id }, // Ensure user owns the booking
+      where: { id: bookingId, userId: session.user.id },
       include: { service: true },
     });
 
     if (!booking) {
-      console.error(`❌ Booking not found or access denied: ${bookingId}`);
       return NextResponse.json({ error: 'Booking not found or access denied' }, { status: 404 });
     }
-
     if (booking.paymentStatus === 'PAID') {
-      console.error(`❌ Booking already paid: ${bookingId}`);
       return NextResponse.json({ error: 'Booking already paid' }, { status: 400 });
     }
 
-    const amountInCents = Math.round(booking.service.price * 100); // Stripe expects amount in cents
-    console.log(`💰 Amount in cents: ${amountInCents}`);
+    const amount = Math.round(booking.service.price);
+    if (amount < 1) {
+      return NextResponse.json({ error: 'Amount must be at least 1 KES' }, { status: 400 });
+    }
 
-    // 2. Create a PaymentIntent with Stripe
-    const metadata = {
-      bookingId: booking.id,
-      userId: session.user.id,
-      serviceName: booking.service.name,
-    };
-    console.log(`📝 Setting PaymentIntent metadata:`, metadata);
+    const stripeService = StripeService.getInstance();
+    const paymentIntent = await stripeService.createPaymentIntent(amount);
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountInCents,
-      currency: 'kes', // Using KES as default currency
-      metadata,
-    });
-
-    console.log(`✅ PaymentIntent created: ${paymentIntent.id}`);
-    console.log(`📝 PaymentIntent metadata:`, paymentIntent.metadata);
+    console.log('Created payment intent:', paymentIntent);
 
     return NextResponse.json({
-      clientSecret: paymentIntent.client_secret,
-      bookingAmount: booking.service.price,
+      clientSecret: paymentIntent.clientSecret,
+      bookingAmount: amount
     });
-
-  } catch (error: unknown) {
-    console.error('❌ Error creating PaymentIntent:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to create PaymentIntent';
+  } catch (error) {
+    console.error('Error creating payment intent:', error);
     return NextResponse.json(
-      { error: errorMessage },
+      { error: error instanceof Error ? error.message : 'Failed to create payment intent' },
       { status: 500 }
     );
   }

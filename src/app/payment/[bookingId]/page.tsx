@@ -109,11 +109,13 @@ export default function PaymentPage() {
       .then(async (res) => {
         if (!res.ok) {
           const errorData = await res.json();
+          console.error('Payment intent creation failed:', errorData);
           throw new Error(errorData.error || `Failed to initialize payment (${res.status})`);
         }
         return res.json();
       })
       .then((data: PaymentIntentResponse) => {
+        console.log('Payment intent created:', data);
         setClientSecret(data.clientSecret);
         setBookingAmount(data.bookingAmount);
       })

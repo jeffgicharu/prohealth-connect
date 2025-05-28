@@ -1,23 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { NextResponse } from 'next/server';
+import { ServiceService } from '@/lib/services/service';
 
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ serviceId: string }> }
 ) {
-  const { serviceId } = await params;
+  const resolvedParams = await params;
+  const serviceId = resolvedParams.serviceId;
 
   if (!serviceId || typeof serviceId !== 'string') {
     return NextResponse.json(
-      { message: 'Service ID must be a string and is required.' },
+      { error: 'Invalid service ID' },
       { status: 400 }
     );
   }
 
   try {
-    const service = await prisma.service.findUnique({
-      where: { id: serviceId },
-    });
+    const serviceService = ServiceService.getInstance();
+    const service = await serviceService.getServiceById(serviceId);
 
     if (!service) {
       return NextResponse.json(
@@ -41,7 +41,7 @@ export async function GET(
 // You can add other HTTP methods (POST, PUT, DELETE) below if needed,
 // ensuring they also follow correct signatures and return responses.
 // For example:
-// export async function POST(request: NextRequest) {
+// export async function POST(request: Request) {
 //   // ...
 //   return NextResponse.json({ message: "Created" }, { status: 201 });
 // }
