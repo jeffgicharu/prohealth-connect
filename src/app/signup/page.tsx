@@ -3,66 +3,48 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-
-// Password validation function
-const validatePassword = (password: string): { isValid: boolean; error?: string } => {
-  if (password.length < 8) {
-    return { isValid: false, error: 'Password must be at least 8 characters long' };
-  }
-  if (!/[A-Z]/.test(password)) {
-    return { isValid: false, error: 'Password must contain at least one uppercase letter' };
-  }
-  if (!/[a-z]/.test(password)) {
-    return { isValid: false, error: 'Password must contain at least one lowercase letter' };
-  }
-  if (!/[0-9]/.test(password)) {
-    return { isValid: false, error: 'Password must contain at least one number' };
-  }
-  if (!/[!@#$%^&*]/.test(password)) {
-    return { isValid: false, error: 'Password must contain at least one special character (!@#$%^&*)' };
-  }
-  return { isValid: true };
-};
+import { LoadingButton } from "@/components/ui/loading-button"
+import toast from 'react-hot-toast'
+import { handleApiError } from '@/lib/utils/errorHandling'
 
 export default function SignupPage() {
   const router = useRouter()
-  const [fullName, setFullName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+  })
   const [isLoading, setIsLoading] = useState(false)
-  const [passwordError, setPasswordError] = useState<string | null>(null)
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newPassword = e.target.value;
-    setPassword(newPassword);
-    const validation = validatePassword(newPassword);
-    setPasswordError(validation.isValid ? null : validation.error ?? null);
-  };
+    const { value } = e.target
+    setFormData(prev => ({ ...prev, password: value }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
-    setSuccess(null)
     setIsLoading(true)
 
     // Validate password
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
-      setError(passwordValidation.error || 'Invalid password');
-      setIsLoading(false);
-      return;
+    if (formData.password.length < 8) {
+      toast.error("Password must be at least 8 characters long")
+      setIsLoading(false)
+      return
     }
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match")
       setIsLoading(false)
       return
     }
@@ -70,26 +52,28 @@ export default function SignupPage() {
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: fullName, email, password }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+        }),
       })
+
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to register.')
+        throw new Error(data.message || 'Registration failed')
       }
 
-      setSuccess('Registration successful! Please login.')
-      // Redirect to login page after a short delay
-      setTimeout(() => {
-        router.push('/login')
-      }, 100)
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message)
-      } else {
-        setError('An unknown error occurred.')
-      }
+      toast.success("Registration successful! Please check your email to verify your account.")
+      router.push('/login')
+    } catch (error) {
+      handleApiError(error)
     } finally {
       setIsLoading(false)
     }
@@ -106,36 +90,52 @@ export default function SignupPage() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            {success && (
-              <Alert className="bg-green-50 text-green-800 border-green-200">
-                <AlertDescription>{success}</AlertDescription>
-              </Alert>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                type="text"
-                placeholder="John Doe"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-                disabled={isLoading}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First name</Label>
+                <Input
+                  id="firstName"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last name</Label>
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.email}
+                onChange={handleChange}
+                required
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone number</Label>
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                placeholder="+254 700 000000"
+                value={formData.phone}
+                onChange={handleChange}
                 required
                 disabled={isLoading}
               />
@@ -144,32 +144,36 @@ export default function SignupPage() {
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
+                name="password"
                 type="password"
-                value={password}
+                value={formData.password}
                 onChange={handlePasswordChange}
                 required
                 disabled={isLoading}
               />
-              {passwordError && (
-                <p className="text-sm text-red-500">{passwordError}</p>
-              )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">Confirm password</Label>
               <Input
                 id="confirmPassword"
+                name="confirmPassword"
                 type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                value={formData.confirmPassword}
+                onChange={handleChange}
                 required
                 disabled={isLoading}
               />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isLoading || !!passwordError}>
-              {isLoading ? "Creating Account..." : "Create Account"}
-            </Button>
+            <LoadingButton 
+              type="submit" 
+              className="w-full" 
+              isLoading={isLoading}
+              loadingText="Creating account..."
+            >
+              Create Account
+            </LoadingButton>
             <p className="text-center text-sm text-brand-light-gray">
               Already have an account?{" "}
               <Link href="/login" className="text-brand-primary hover:text-brand-primary-hover">

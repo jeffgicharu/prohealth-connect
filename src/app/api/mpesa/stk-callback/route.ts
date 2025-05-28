@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { BookingService } from '@/lib/services/booking';
 
 interface CallbackMetadataItem {
   Name: string;
@@ -54,6 +55,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ ResultCode: 0, ResultDesc: "Accepted", ThirdPartyTransID: "" });
     }
 
+    const bookingService = BookingService.getInstance();
+
     if (resultCode === 0) {
       const callbackMetadata = stkCallback.CallbackMetadata?.Item;
       let amount: number | undefined;
@@ -67,15 +70,9 @@ export async function POST(request: Request) {
         mpesaReceiptNumber = receiptItem ? String(receiptItem.Value) : undefined;
       }
 
-      await prisma.$transaction([
-        prisma.booking.update({
-          where: { id: booking.id },
-          data: {
-            paymentStatus: 'PAID',
-            status: 'CONFIRMED',
-          },
-        }),
-        prisma.transaction.create({
+      await prisma.$transaction(async (tx) => {
+        await bookingService.updateBookingStatus(booking.id, 'CONFIRMED', 'PAID');
+        await tx.transaction.create({
           data: {
             bookingId: booking.id,
             amount: amount || booking.service.price,
@@ -84,17 +81,12 @@ export async function POST(request: Request) {
             gatewayTransactionId: mpesaReceiptNumber || checkoutRequestID,
             status: 'SUCCESS',
           },
-        }),
-      ]);
+        });
+      });
 
       console.log(`M-Pesa Payment SUCCESS for Booking ID ${booking.id}, CheckoutRequestID: ${checkoutRequestID}`);
     } else {
-      await prisma.booking.update({
-        where: { id: booking.id },
-        data: {
-          paymentStatus: 'FAILED',
-        },
-      });
+      await bookingService.updateBookingStatus(booking.id, booking.status, 'FAILED');
       console.log(`M-Pesa Payment FAILED/CANCELLED for Booking ID ${booking.id}, CheckoutRequestID: ${checkoutRequestID}. ResultCode: ${resultCode}, Desc: ${resultDesc}`);
     }
 

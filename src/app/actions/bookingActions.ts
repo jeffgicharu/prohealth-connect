@@ -26,8 +26,14 @@ export async function createBooking(serviceId: string) {
 
     return { success: "Booking created successfully!", booking: newBooking };
   } catch (error) {
-    console.error("Error creating booking:", error);
-    return { error: "Failed to create booking. Please try again." };
+    // Log detailed error information for debugging
+    console.error("Error creating booking:", {
+      error,
+      userId: session.user.id,
+      serviceId,
+      timestamp: new Date().toISOString()
+    });
+    return { error: "Unable to create booking. Please try again or contact support if the issue persists." };
   }
 }
 
@@ -35,7 +41,7 @@ export async function getUserBookings() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    return { error: "User not authenticated." };
+    return { error: "Please log in to view your bookings." };
   }
 
   try {
@@ -43,7 +49,12 @@ export async function getUserBookings() {
     const bookings = await bookingService.getUserBookings(session.user.id);
     return { bookings };
   } catch (error) {
-    console.error("Error fetching user bookings:", error);
-    return { error: "Failed to fetch bookings. Please try again." };
+    // Log detailed error information for debugging
+    console.error("Error fetching user bookings:", {
+      error,
+      userId: session.user.id,
+      timestamp: new Date().toISOString()
+    });
+    return { error: "Unable to fetch your bookings. Please try again or contact support if the issue persists." };
   }
 } 

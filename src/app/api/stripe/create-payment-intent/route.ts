@@ -10,8 +10,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
 
+  const body = await request.json();
+  
   try {
-    const body = await request.json();
     const { bookingId } = body;
 
     if (!bookingId) {
@@ -45,9 +46,17 @@ export async function POST(request: Request) {
       bookingAmount: amount
     });
   } catch (error) {
-    console.error('Error creating payment intent:', error);
+    // Log detailed error information for debugging
+    console.error('Error creating payment intent:', {
+      error,
+      userId: session.user.id,
+      bookingId: body?.bookingId,
+      timestamp: new Date().toISOString()
+    });
+
+    // Return user-friendly error message
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to create payment intent' },
+      { error: 'Unable to process payment. Please try again or contact support if the issue persists.' },
       { status: 500 }
     );
   }

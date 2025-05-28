@@ -52,26 +52,6 @@ export class BookingService {
     }
   }
 
-  async getBookingById(bookingId: string, userId: string): Promise<BookingWithDetails | null> {
-    try {
-      const booking = await prisma.booking.findFirst({
-        where: {
-          id: bookingId,
-          userId: userId
-        },
-        include: {
-          service: true,
-          user: true
-        }
-      });
-
-      return booking;
-    } catch (error) {
-      console.error('Error fetching booking:', error);
-      throw new Error('Failed to fetch booking');
-    }
-  }
-
   async getUserBookings(userId: string): Promise<BookingWithDetails[]> {
     try {
       const bookings = await prisma.booking.findMany({

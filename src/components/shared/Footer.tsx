@@ -10,9 +10,6 @@ export default function Footer() {
           {/* Primary Copyright Line */}
           <p className="text-brand-dark font-medium">© {currentYear} ProHealth Connect. All rights reserved.</p>
 
-          {/* Secondary Line */}
-          <p className="text-brand-light-gray text-sm">Built for portfolio purposes by [Your Name]</p>
-
           {/* Optional Links */}
           <div className="flex items-center space-x-6 text-sm">
             <Link

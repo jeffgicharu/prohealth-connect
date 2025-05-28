@@ -7,9 +7,11 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { Button } from '@/components/ui/button';
 import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import toast from 'react-hot-toast';
+import { LoadingButton } from "@/components/ui/loading-button"
+import { handleApiError } from '@/lib/utils/errorHandling';
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
 // recreating the `Stripe` object on every render.
@@ -31,51 +33,69 @@ function CheckoutForm({ bookingId, bookingAmount }: { bookingId: string, booking
   const stripe = useStripe();
   const elements = useElements();
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
-    setErrorMessage(null);
 
     if (!stripe || !elements) {
-      setErrorMessage("Stripe is not ready. Please try again in a moment.");
+      toast.error("Payment system is not ready. Please refresh the page and try again.");
       setIsLoading(false);
       return;
     }
 
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/payment/status?booking_id=${bookingId}`,
-      },
-    });
+    try {
+      const { error } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/payment/status?booking_id=${bookingId}`,
+        },
+      });
 
-    if (error) {
-      if (error.type === "card_error" || error.type === "validation_error") {
-        setErrorMessage(error.message || "An unexpected error occurred.");
-      } else {
-        setErrorMessage("An unexpected error occurred. Please try again.");
+      if (error) {
+        // Map Stripe error types to user-friendly messages
+        let userMessage = "An unexpected error occurred. Please try again.";
+        
+        if (error.type === "card_error") {
+          switch (error.code) {
+            case "card_declined":
+              userMessage = "Your card was declined. Please try a different card.";
+              break;
+            case "insufficient_funds":
+              userMessage = "Your card has insufficient funds.";
+              break;
+            case "expired_card":
+              userMessage = "Your card has expired. Please use a different card.";
+              break;
+            default:
+              userMessage = error.message || "There was a problem with your card. Please try again.";
+          }
+        } else if (error.type === "validation_error") {
+          userMessage = "Please check your card details and try again.";
+        }
+        
+        toast.error(userMessage);
       }
+    } catch (err) {
+      console.error("Payment confirmation error:", err);
+      toast.error("Something went wrong. Please try again or contact support if the issue persists.");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <PaymentElement id="payment-element" />
-      <Button
-        disabled={isLoading || !stripe || !elements}
+      <LoadingButton
         type="submit"
         className="w-full bg-brand-primary text-white hover:bg-brand-primary-hover py-3 text-lg"
+        isLoading={isLoading}
+        loadingText="Processing..."
+        disabled={!stripe || !elements}
       >
-        {isLoading ? "Processing..." : `Pay Ksh ${bookingAmount.toFixed(2)}`}
-      </Button>
-      {errorMessage && (
-        <Alert variant="destructive">
-          <AlertDescription>{errorMessage}</AlertDescription>
-        </Alert>
-      )}
+        Pay Ksh {bookingAmount.toFixed(2)}
+      </LoadingButton>
     </form>
   );
 }
@@ -87,10 +107,8 @@ export default function PaymentPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [bookingAmount, setBookingAmount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [mpesaPhoneNumber, setMpesaPhoneNumber] = useState('');
   const [isMpesaLoading, setIsMpesaLoading] = useState(false);
-  const [mpesaMessage, setMpesaMessage] = useState<string | null>(null);
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -109,37 +127,39 @@ export default function PaymentPage() {
       .then(async (res) => {
         if (!res.ok) {
           const errorData = await res.json();
-          console.error('Payment intent creation failed:', errorData);
+          console.error('Payment intent creation failed:', {
+            error: errorData,
+            bookingId,
+            status: res.status
+          });
           throw new Error(errorData.error || `Failed to initialize payment (${res.status})`);
         }
         return res.json();
       })
       .then((data: PaymentIntentResponse) => {
-        console.log('Payment intent created:', data);
         setClientSecret(data.clientSecret);
         setBookingAmount(data.bookingAmount);
       })
-      .catch((err: unknown) => {
-        console.error("Error fetching client secret:", err);
-        const errorMessage = err instanceof Error ? err.message : "Could not initialize payment. Please try again.";
-        setError(errorMessage);
+      .catch((err) => {
+        handleApiError(err);
+        router.push('/dashboard/bookings');
       })
       .finally(() => setLoading(false));
     } else if (status === 'loading') {
       // Wait for session status
     } else if(!bookingId) {
-      setError("Booking ID is missing.");
+      toast.error("Invalid booking. Please try again or contact support.");
+      router.push('/dashboard/bookings');
       setLoading(false);
     }
-  }, [bookingId, status, session, router]);
+  }, [status, bookingId, router]);
 
   const handleMpesaPayment = async () => {
     if (!mpesaPhoneNumber.match(/^254\d{9}$/)) {
-      setMpesaMessage("Please enter a valid M-Pesa number (e.g., 254712345678).");
+      toast.error("Please enter a valid M-Pesa number starting with 254 followed by 9 digits (e.g., 254712345678).");
       return;
     }
     setIsMpesaLoading(true);
-    setMpesaMessage(null);
     try {
       const response = await fetch('/api/mpesa/stk-push', {
         method: 'POST',
@@ -150,10 +170,14 @@ export default function PaymentPage() {
       if (!response.ok || data.ResponseCode !== "0") {
         throw new Error(data.errorMessage || data.CustomerMessage || 'Failed to initiate M-Pesa payment.');
       }
-      setMpesaMessage(`STK Push sent to ${mpesaPhoneNumber}. Please enter your M-Pesa PIN on your phone to authorize the payment of Ksh ${bookingAmount.toFixed(2)}.`);
+      const successMessage = `Payment request sent to ${mpesaPhoneNumber}. Please check your phone and enter your M-Pesa PIN to complete the payment of Ksh ${bookingAmount.toFixed(2)}.`;
+      toast.success(successMessage);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
-      setMpesaMessage(errorMessage);
+      console.error("M-Pesa payment error:", err);
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : "Unable to process M-Pesa payment. Please try again or contact support if the issue persists.";
+      toast.error(errorMessage);
     } finally {
       setIsMpesaLoading(false);
     }
@@ -165,20 +189,6 @@ export default function PaymentPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-8">Loading Payment Gateway...</div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8 max-w-md">
-        <Card>
-          <CardContent className="pt-6">
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
           </CardContent>
         </Card>
       </div>
@@ -231,18 +241,14 @@ export default function PaymentPage() {
                   onChange={(e) => setMpesaPhoneNumber(e.target.value)}
                   disabled={isMpesaLoading}
                 />
-                <Button
+                <LoadingButton
                   onClick={handleMpesaPayment}
-                  disabled={isMpesaLoading || !mpesaPhoneNumber}
                   className="w-full bg-green-600 text-white hover:bg-green-700 py-3 text-lg"
+                  isLoading={isMpesaLoading}
+                  loadingText="Initiating..."
                 >
-                  {isMpesaLoading ? "Initiating..." : `Pay Ksh ${bookingAmount.toFixed(2)} with M-Pesa`}
-                </Button>
-                {mpesaMessage && (
-                  <Alert variant={mpesaMessage.includes('Failed') ? "destructive" : "default"}>
-                    <AlertDescription>{mpesaMessage}</AlertDescription>
-                  </Alert>
-                )}
+                  Pay Ksh {bookingAmount.toFixed(2)} with M-Pesa
+                </LoadingButton>
               </div>
             </TabsContent>
           </Tabs>

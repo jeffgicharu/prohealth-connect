@@ -3,12 +3,15 @@
 import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { MapPin, Phone, Mail, Clock, Send } from "lucide-react"
+import { LoadingButton } from "@/components/ui/loading-button"
+import toast from 'react-hot-toast'
+import { handleApiError } from '@/lib/utils/errorHandling'
+import { Button } from "@/components/ui/button"
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -17,6 +20,7 @@ export default function ContactPage() {
     subject: "",
     message: "",
   })
+  const [isLoading, setIsLoading] = useState(false)
   const observerRef = useRef<IntersectionObserver | null>(null)
 
   useEffect(() => {
@@ -41,10 +45,37 @@ export default function ContactPage() {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle form submission
-    console.log("Form submitted:", formData)
+    setIsLoading(true)
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send message')
+      }
+
+      toast.success('Message sent successfully! We will get back to you soon.')
+      setFormData({
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+      })
+    } catch (error) {
+      handleApiError(error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const contactInfo = [
@@ -146,6 +177,7 @@ export default function ContactPage() {
                         onChange={(e) => handleInputChange("name", e.target.value)}
                         className="border-brand-light-gray/30 focus:border-brand-primary"
                         required
+                        disabled={isLoading}
                       />
                     </div>
                     <div className="space-y-2">
@@ -160,6 +192,7 @@ export default function ContactPage() {
                         onChange={(e) => handleInputChange("email", e.target.value)}
                         className="border-brand-light-gray/30 focus:border-brand-primary"
                         required
+                        disabled={isLoading}
                       />
                     </div>
                   </div>
@@ -175,6 +208,7 @@ export default function ContactPage() {
                       onChange={(e) => handleInputChange("subject", e.target.value)}
                       className="border-brand-light-gray/30 focus:border-brand-primary"
                       required
+                      disabled={isLoading}
                     />
                   </div>
                   <div className="space-y-2">
@@ -188,15 +222,18 @@ export default function ContactPage() {
                       onChange={(e) => handleInputChange("message", e.target.value)}
                       className="min-h-32 border-brand-light-gray/30 focus:border-brand-primary resize-none"
                       required
+                      disabled={isLoading}
                     />
                   </div>
-                  <Button
+                  <LoadingButton
                     type="submit"
                     className="w-full bg-brand-primary hover:bg-brand-primary-hover text-brand-white h-12 text-lg font-semibold transition-all duration-200"
+                    isLoading={isLoading}
+                    loadingText="Sending..."
                   >
                     <Send className="w-5 h-5 mr-2" />
                     Send Message
-                  </Button>
+                  </LoadingButton>
                 </form>
               </CardContent>
             </Card>

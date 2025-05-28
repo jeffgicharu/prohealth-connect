@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
+import { handleApiError } from '@/lib/utils/errorHandling';
+import toast from 'react-hot-toast';
 
 export default function PaymentStatusPage() {
   const router = useRouter();
@@ -23,6 +24,7 @@ export default function PaymentStatusPage() {
     if (!payment_intent || !payment_intent_client_secret || !redirect_status || !booking_id) {
       setStatus('error');
       setMessage('Invalid payment status parameters.');
+      toast.error('Invalid payment status parameters.');
       return;
     }
 
@@ -30,50 +32,24 @@ export default function PaymentStatusPage() {
     if (redirect_status === 'succeeded') {
       setStatus('success');
       setMessage('Your payment was successful! Your booking is confirmed. You will receive a confirmation email shortly.');
+      toast.success('Payment successful! Your booking is confirmed.');
     } else if (redirect_status === 'processing') {
       setStatus('processing');
       setMessage('Your payment is processing. We will update you when payment has been received.');
+      toast.loading('Payment is processing...', { duration: 4000 });
     } else if (redirect_status === 'requires_payment_method') {
       setStatus('error');
       setMessage('Payment failed. Please try another payment method.');
+      toast.error('Payment failed. Please try another payment method.');
     } else {
       setStatus('error');
       setMessage('Something went wrong with your payment. Please try again or contact support.');
+      toast.error('Something went wrong with your payment. Please try again or contact support.');
     }
-
-    // Verify the payment status with your backend
-    fetch('/api/stripe/verify-payment', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        payment_intent,
-        payment_intent_client_secret,
-        redirect_status,
-        booking_id,
-      }),
-    })
-    .then(async (res) => {
-      if (!res.ok) {
-        throw new Error('Failed to verify payment');
-      }
-      const data = await res.json();
-      setStatus(data.status === 'succeeded' ? 'success' : 'error');
-      setMessage(data.message || (data.status === 'succeeded' ? 'Payment successful!' : 'Payment failed.'));
-    })
-    .catch((error) => {
-      console.error('Error verifying payment:', error);
-      setStatus('error');
-      setMessage('Failed to verify payment status. Please contact support.');
-    });
   }, [searchParams]);
 
   const handleViewBooking = () => {
-    const booking_id = searchParams.get('booking_id');
-    if (booking_id) {
-      router.push(`/dashboard/bookings?bookingId=${booking_id}`);
-    } else {
-      router.push('/dashboard/bookings');
-    }
+    router.push('/dashboard');
   };
 
   return (
@@ -123,14 +99,6 @@ export default function PaymentStatusPage() {
               </Link>
             </div>
           </div>
-
-          {status === 'error' && (
-            <Alert variant="destructive">
-              <AlertDescription>
-                If you believe this is an error, please contact our support team for assistance.
-              </AlertDescription>
-            </Alert>
-          )}
         </CardContent>
       </Card>
     </div>

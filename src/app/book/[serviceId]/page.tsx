@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { createBooking } from '@/app/actions/bookingActions';
 import { Service } from '@prisma/client';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { LoadingButton } from '@/components/ui/loading-button';
+import toast from 'react-hot-toast';
 
 // Helper function to fetch service details client-side if needed,
 // or pass service data via props if navigating from a server component.
@@ -21,8 +22,6 @@ export default function BookServicePage() {
 
   const [service, setService] = useState<Service | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (serviceId) {
@@ -37,7 +36,7 @@ export default function BookServicePage() {
           setService(data);
         } catch (err) {
           console.error('Error fetching service:', err);
-          setError("Failed to load service details.");
+          toast.error("Failed to load service details.");
         } finally {
           setIsLoading(false);
         }
@@ -52,20 +51,18 @@ export default function BookServicePage() {
       return;
     }
     if (!serviceId) {
-      setError("Service ID is missing.");
+      toast.error("Service ID is missing.");
       return;
     }
 
     setIsLoading(true);
-    setError(null);
-    setSuccess(null);
     const result = await createBooking(serviceId);
     setIsLoading(false);
 
     if (result.error) {
-      setError(result.error);
+      toast.error(result.error);
     } else if (result.success && result.booking) {
-      setSuccess(`${result.success} Your booking ID is ${result.booking.id}. You will proceed to payment next.`);
+      toast.success(`${result.success} Your booking ID is ${result.booking.id}. You will proceed to payment next.`);
       router.push(`/dashboard/bookings?bookingId=${result.booking.id}`);
     }
   };
@@ -83,7 +80,9 @@ export default function BookServicePage() {
       <div className="text-center py-10">
         <p className="mb-4">Please log in to book this service.</p>
         <Link href={`/login?callbackUrl=/book/${serviceId}`}>
-          <Button className="bg-brand-primary text-white">Login</Button>
+          <LoadingButton className="bg-brand-primary text-white">
+            Login
+          </LoadingButton>
         </Link>
       </div>
     );
@@ -102,19 +101,19 @@ export default function BookServicePage() {
           <p className='text-sm text-gray-600 mb-6'>
             Payment will be required to confirm this booking in the next step. For now, this will create a pending booking.
           </p>
-          <Button
+          <LoadingButton
             onClick={handleConfirmBooking}
-            disabled={isLoading || !session}
+            disabled={!session}
             className='w-full bg-brand-primary text-white hover:bg-brand-primary-hover py-3 text-lg'
+            isLoading={isLoading}
+            loadingText="Processing..."
           >
-            {isLoading ? 'Processing...' : 'Confirm Booking & Proceed'}
-          </Button>
+            Confirm Booking & Proceed
+          </LoadingButton>
         </div>
       ) : (
         <p className='text-center text-gray-600'>Loading service details or service not found...</p>
       )}
-      {error && <p className='mt-4 text-center text-red-500 bg-red-100 p-3 rounded-md'>{error}</p>}
-      {success && <p className='mt-4 text-center text-green-600 bg-green-100 p-3 rounded-md'>{success}</p>}
       <div className="mt-8 text-center">
         <Link href={serviceId ? `/services/${serviceId}` : "/services"} className="text-brand-primary hover:underline">
           &larr; Back to service details

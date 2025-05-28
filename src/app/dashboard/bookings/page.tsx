@@ -1,12 +1,12 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/authOptions";
 import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { getUserBookings } from "@/app/actions/bookingActions";
 
 interface Service {
   id: string;
@@ -40,7 +40,7 @@ function BookingCard({ booking }: BookingCardProps) {
     switch (status.toUpperCase()) {
       case "CONFIRMED":
       case "PAID":
-        return "default"; // Changed from "success" to "default"
+        return "default";
       case "PENDING":
       case "UNPAID":
         return "secondary";
@@ -91,15 +91,17 @@ export default async function BookingsPage() {
     redirect("/login?callbackUrl=/dashboard/bookings");
   }
 
-  const userBookings = await prisma.booking.findMany({
-    where: { userId: session.user.id },
-    include: {
-      service: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+  const { bookings: userBookings = [], error } = await getUserBookings() as { bookings: Booking[], error?: string };
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-10 bg-white shadow-md rounded-lg">
+          <p className="text-xl text-red-500 mb-4">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">

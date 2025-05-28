@@ -15,6 +15,7 @@ export default function Navbar() {
   // Base navigation links
   const baseNavLinks = [
     { href: "/", label: "Home" },
+    { href: "/about", label: "About" },
     { href: "/services", label: "Services" },
     { href: "/ai-assistant", label: "AI Assistant" },
   ]

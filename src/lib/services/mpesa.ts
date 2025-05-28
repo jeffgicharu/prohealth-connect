@@ -65,7 +65,7 @@ export class MpesaService {
     return `${year}${month}${day}${hours}${minutes}${seconds}`;
   }
 
-  async getAccessToken(): Promise<string | null> {
+  private async getAccessToken(): Promise<string | null> {
     const consumerKey = process.env.MPESA_CONSUMER_KEY;
     const consumerSecret = process.env.MPESA_CONSUMER_SECRET;
 
@@ -146,8 +146,41 @@ export class MpesaService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<MpesaErrorResponse>;
-      const errorMessage = axiosError.response?.data?.errorMessage || axiosError.message || 'Unknown error occurred';
-      throw new Error(errorMessage);
+      
+      // Log detailed error information for debugging
+      console.error('M-Pesa STK Push Error:', {
+        error: axiosError.response?.data || axiosError.message,
+        bookingId,
+        phoneNumber,
+        amount,
+        timestamp: new Date().toISOString(),
+        requestPayload: {
+          ...payload,
+          Password: '[REDACTED]' // Don't log sensitive data
+        }
+      });
+
+      // Map M-Pesa error codes to user-friendly messages
+      const errorCode = axiosError.response?.data?.errorCode;
+      let userMessage = 'Unable to process payment. Please try again.';
+      
+      if (errorCode) {
+        switch (errorCode) {
+          case 'INS-1':
+            userMessage = 'Invalid phone number format. Please check and try again.';
+            break;
+          case 'INS-2':
+            userMessage = 'Insufficient funds. Please ensure you have enough balance.';
+            break;
+          case 'INS-5':
+            userMessage = 'Transaction declined. Please try again or use a different payment method.';
+            break;
+          default:
+            userMessage = 'Payment processing failed. Please try again or contact support.';
+        }
+      }
+
+      throw new Error(userMessage);
     }
   }
 } 

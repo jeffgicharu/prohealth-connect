@@ -4,11 +4,11 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { LoadingButton } from "@/components/ui/loading-button"
+import toast from 'react-hot-toast'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -17,12 +17,10 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
     setIsLoading(true)
 
     try {
@@ -33,12 +31,14 @@ export default function LoginPage() {
       })
 
       if (result?.error) {
-        setError(result.error === "CredentialsSignin" ? "Invalid email or password." : result.error)
+        toast.error(result.error === "CredentialsSignin" ? "Invalid email or password." : result.error)
       } else if (result?.ok) {
+        toast.success("Successfully signed in!")
         router.push(callbackUrl)
       }
-    } catch {
-      setError("An unexpected error occurred.")
+    } catch (err) {
+      console.error('Login error:', err);
+      toast.error("An unexpected error occurred.")
     } finally {
       setIsLoading(false)
     }
@@ -55,11 +55,6 @@ export default function LoginPage() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -93,9 +88,14 @@ export default function LoginPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign In"}
-            </Button>
+            <LoadingButton 
+              type="submit" 
+              className="w-full" 
+              isLoading={isLoading}
+              loadingText="Signing in..."
+            >
+              Sign In
+            </LoadingButton>
             <p className="text-center text-sm text-brand-light-gray">
               Don&apos;t have an account?{" "}
               <Link href="/signup" className="text-brand-primary hover:text-brand-primary-hover">
