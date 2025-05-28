@@ -14,8 +14,17 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: "ProHealth Connect - Modern Health, Simplified & Accessible",
-  description: "Your trusted partner for AI-powered health insights and seamless wellness service bookings.",
+  title: 'ProHealth Connect',
+  description: 'Your trusted platform for wellness services and health insights',
+  icons: {
+    icon: [
+      { url: '/favicon-16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-48.png', sizes: '48x48', type: 'image/png' },
+    ],
+    shortcut: '/favicon-32.png',
+    apple: '/favicon-48.png',
+  },
 }
 
 export default function RootLayout({

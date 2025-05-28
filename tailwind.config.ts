@@ -57,10 +57,10 @@ const config: Config = {
           foreground: "hsl(var(--card-foreground))",
         },
         // Custom ProHealth Connect brand colors
-        "brand-primary": "#0063F2",
-        "brand-primary-hover": "#0052CC",
-        "brand-dark": "#020202",
-        "brand-light-gray": "#B8B8B8",
+        "brand-primary": "#2563EB",
+        "brand-primary-hover": "#1D4ED8",
+        "brand-dark": "#1F2937",
+        "brand-light-gray": "#4B5563",
         "brand-white": "#FFFFFF",
       },
       borderRadius: {

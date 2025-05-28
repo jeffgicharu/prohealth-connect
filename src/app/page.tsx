@@ -75,10 +75,10 @@ export default function HomePage() {
       </section>
 
       {/* Features/Services Overview Section */}
-      <section className="py-20 px-6 lg:px-8 bg-brand-white">
+      <section className="py-20 px-6 lg:px-8 bg-brand-white" aria-labelledby="features-heading">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16 scroll-reveal">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-brand-dark mb-6">
+            <h2 id="features-heading" className="text-3xl md:text-4xl lg:text-5xl font-bold text-brand-dark mb-6">
               Discover How ProHealth Connect <span className="text-brand-primary">Empowers You</span>
             </h2>
             <p className="text-lg md:text-xl text-brand-light-gray max-w-3xl mx-auto">
@@ -86,11 +86,11 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" role="region" aria-label="Key features">
             {/* Card 1: AI-Powered Insights */}
             <Card className="scroll-reveal hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2 border-brand-light-gray/20">
               <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="w-16 h-16 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-6" aria-hidden="true">
                   <Brain className="w-8 h-8 text-brand-primary" />
                 </div>
                 <h3 className="text-xl font-bold text-brand-dark mb-4">AI-Powered Insights</h3>
@@ -104,7 +104,7 @@ export default function HomePage() {
             {/* Card 2: Easy Service Booking */}
             <Card className="scroll-reveal hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2 border-brand-light-gray/20">
               <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="w-16 h-16 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-6" aria-hidden="true">
                   <Calendar className="w-8 h-8 text-brand-primary" />
                 </div>
                 <h3 className="text-xl font-bold text-brand-dark mb-4">Easy Service Booking</h3>
@@ -117,7 +117,7 @@ export default function HomePage() {
             {/* Card 3: Secure & Diverse Payments */}
             <Card className="scroll-reveal hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2 border-brand-light-gray/20">
               <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="w-16 h-16 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-6" aria-hidden="true">
                   <Shield className="w-8 h-8 text-brand-primary" />
                 </div>
                 <h3 className="text-xl font-bold text-brand-dark mb-4">Secure & Diverse Payments</h3>

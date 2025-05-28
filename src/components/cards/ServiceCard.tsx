@@ -21,7 +21,7 @@ const ServiceCard = memo(function ServiceCard({ service }: ServiceCardProps) {
   const placeholderSrc = `https://placehold.co/600x400/E2E8F0/AAAAAA?text=${encodeURIComponent(service.name || 'Service')}`;
 
   return (
-    <Card className='flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300'>
+    <Card className='flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-2'>
       <div className='relative w-full h-48 bg-gray-100'>
         <Image
           src={placeholderSrc}
@@ -37,6 +37,7 @@ const ServiceCard = memo(function ServiceCard({ service }: ServiceCardProps) {
           blurDataURL={blurDataURL}
           onLoadingComplete={() => setIsLoading(false)}
           quality={85}
+          aria-label={`Image for ${service.name}`}
         />
         {isLoading && (
           <div className="absolute inset-0 bg-gray-200 animate-pulse" />
