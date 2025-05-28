@@ -25,6 +25,16 @@ export class ServiceService {
         : { createdAt: 'desc' };
 
       const services = await prisma.service.findMany({
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          price: true,
+          category: true,
+          imageUrl: true,
+          createdAt: true,
+          updatedAt: true,
+        },
         orderBy
       });
 
@@ -38,7 +48,19 @@ export class ServiceService {
   async getServiceById(serviceId: string): Promise<Service | null> {
     try {
       const service = await prisma.service.findUnique({
-        where: { id: serviceId }
+        where: { id: serviceId },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          price: true,
+          category: true,
+          imageUrl: true,
+          duration: true,
+          availability: true,
+          createdAt: true,
+          updatedAt: true,
+        }
       });
 
       return service;

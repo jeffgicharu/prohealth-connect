@@ -8,6 +8,7 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { LoadingButton } from '@/components/ui/loading-button';
 import toast from 'react-hot-toast';
+import { handleApiError } from '@/lib/utils/errorHandling';
 
 // Helper function to fetch service details client-side if needed,
 // or pass service data via props if navigating from a server component.

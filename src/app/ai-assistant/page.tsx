@@ -9,7 +9,6 @@ import { Brain, AlertTriangle, Sparkles, Info } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import { LoadingButton } from "@/components/ui/loading-button"
 import toast from 'react-hot-toast'
-import { handleApiError } from '@/lib/utils/errorHandling'
 
 export default function AIAssistantPage() {
   const [symptoms, setSymptoms] = useState("")

@@ -1,9 +1,12 @@
 import { getServiceById } from '@/app/actions/serviceActions';
-import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Briefcase, Clock, UserCircle, DollarSign } from 'lucide-react';
+import { BookingButton } from '@/components/buttons/BookingButton';
+
+// Base64 encoded tiny placeholder image (1x1 pixel transparent)
+const blurDataURL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
 export default async function ServiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,6 +30,9 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
             priority
+            placeholder="blur"
+            blurDataURL={blurDataURL}
+            quality={90}
           />
         </div>
         <div className='p-6 md:p-8'>
@@ -58,11 +64,7 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
           </div>
 
           <div className='text-center md:text-left'>
-            <Link href={`/book/${service.id}`}> {/* This will be the booking page/flow trigger */}
-              <Button size='lg' className='bg-brand-primary text-white hover:bg-brand-primary-hover px-8 py-3 text-lg'>
-                Book This Service
-              </Button>
-            </Link>
+            <BookingButton serviceId={service.id} />
           </div>
         </div>
       </div>

@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
-import { handleApiError } from '@/lib/utils/errorHandling';
 import toast from 'react-hot-toast';
 
 export default function PaymentStatusPage() {

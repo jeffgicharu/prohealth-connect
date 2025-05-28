@@ -2,16 +2,21 @@
 
 import { Service } from '@prisma/client';
 import Image from 'next/image';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Briefcase, Clock, UserCircle } from 'lucide-react';
+import { ServiceCardActions } from './ServiceCardActions';
+import { useState, memo } from 'react';
 
 interface ServiceCardProps {
   service: Service;
 }
 
-export default function ServiceCard({ service }: ServiceCardProps) {
+// Base64 encoded tiny placeholder image (1x1 pixel transparent)
+const blurDataURL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+
+const ServiceCard = memo(function ServiceCard({ service }: ServiceCardProps) {
+  const [isLoading, setIsLoading] = useState(true);
+  
   // Generate a placeholder image URL with the service name
   const placeholderSrc = `https://placehold.co/600x400/E2E8F0/AAAAAA?text=${encodeURIComponent(service.name || 'Service')}`;
 
@@ -22,9 +27,20 @@ export default function ServiceCard({ service }: ServiceCardProps) {
           src={placeholderSrc}
           alt={service.name || 'Service Image'}
           fill
-          className="object-cover"
+          className={`
+            object-cover transition-opacity duration-300
+            ${isLoading ? 'opacity-0' : 'opacity-100'}
+          `}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          loading="lazy"
+          placeholder="blur"
+          blurDataURL={blurDataURL}
+          onLoadingComplete={() => setIsLoading(false)}
+          quality={85}
         />
+        {isLoading && (
+          <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+        )}
       </div>
       <CardHeader>
         <CardTitle className='text-xl font-semibold text-brand-dark'>{service.name}</CardTitle>
@@ -58,15 +74,12 @@ export default function ServiceCard({ service }: ServiceCardProps) {
         <p className='text-lg font-bold text-brand-primary mb-2 sm:mb-0'>
           Ksh {service.price.toFixed(2)}
         </p>
-        <div className="flex space-x-2 w-full sm:w-auto">
-          <Link href={`/services/${service.id}`} className="flex-1 sm:flex-none">
-            <Button variant='outline' className='w-full border-brand-primary text-brand-primary hover:bg-brand-primary/10'>View Details</Button>
-          </Link>
-          <Link href={`/book/${service.id}`} className="flex-1 sm:flex-none">
-            <Button className='w-full bg-brand-primary text-white hover:bg-brand-primary-hover'>Book Now</Button>
-          </Link>
-        </div>
+        <ServiceCardActions serviceId={service.id} />
       </CardFooter>
     </Card>
   );
-} 
+});
+
+ServiceCard.displayName = 'ServiceCard';
+
+export default ServiceCard; 
