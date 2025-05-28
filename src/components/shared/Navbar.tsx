@@ -6,6 +6,20 @@ import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
+import { User, LogOut } from "lucide-react"
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -91,16 +105,40 @@ export default function Navbar() {
             )}
 
             {status === "authenticated" && session?.user && (
-              <>
-                <span className="text-sm text-brand-dark">Hi, {session.user.name || session.user.email}</span>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => signOut({ callbackUrl: '/' })}
-                  className="text-brand-dark hover:text-brand-primary"
-                >
-                  Logout
-                </Button>
-              </>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Avatar className="cursor-pointer">
+                    <AvatarImage src={session.user.image || undefined} alt={session.user.name || 'User'} />
+                    <AvatarFallback>{
+                      session.user.name
+                        ? session.user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2)
+                        : session.user.email
+                          ? session.user.email.slice(0,2).toUpperCase()
+                          : 'U'
+                    }</AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>
+                    {session.user.name || session.user.email || 'My Account'}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/profile" className="flex items-center gap-2">
+                      <User className="w-4 h-4" /> Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/bookings" className="flex items-center gap-2">
+                      My Bookings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })} className="flex items-center gap-2 cursor-pointer">
+                    <LogOut className="w-4 h-4" /> Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
 
@@ -152,14 +190,40 @@ export default function Navbar() {
 
                 {status === "authenticated" && session?.user && (
                   <>
-                    <span className="text-sm text-brand-dark">Hi, {session.user.name || session.user.email}</span>
-                    <Button 
-                      variant="ghost" 
-                      onClick={() => signOut({ callbackUrl: '/' })}
-                      className="text-brand-dark hover:text-brand-primary"
-                    >
-                      Logout
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Avatar className="cursor-pointer">
+                          <AvatarImage src={session.user.image || undefined} alt={session.user.name || 'User'} />
+                          <AvatarFallback>{
+                            session.user.name
+                              ? session.user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2)
+                              : session.user.email
+                                ? session.user.email.slice(0,2).toUpperCase()
+                                : 'U'
+                          }</AvatarFallback>
+                        </Avatar>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>
+                          {session.user.name || session.user.email || 'My Account'}
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link href="/dashboard/profile" className="flex items-center gap-2">
+                            <User className="w-4 h-4" /> Profile
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/dashboard/bookings" className="flex items-center gap-2">
+                            My Bookings
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })} className="flex items-center gap-2 cursor-pointer">
+                          <LogOut className="w-4 h-4" /> Logout
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </>
                 )}
               </div>

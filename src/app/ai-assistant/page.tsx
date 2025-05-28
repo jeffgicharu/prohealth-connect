@@ -50,16 +50,24 @@ export default function AIAssistantPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        if (response.status === 429) {
-          throw new Error('You\'ve made too many requests for AI insights. Please wait a moment before trying again.');
+        let errorMessage = "Failed to get insights. Please try again."; // Default message
+        
+        if (data.details && Array.isArray(data.details) && data.details.length > 0) {
+          errorMessage = data.details.join("\n"); // If Zod fieldErrors.symptoms is an array
+        } else if (data.error) {
+          errorMessage = data.error;
         }
-        throw new Error(data.error || data.message || 'Failed to get insights.');
+        
+        toast.error(errorMessage);
+        setInsight(""); // Clear any previous insight
+        return; // Stop further processing
       }
 
       setInsight(data.insight)
       toast.success('AI insights generated successfully!')
-    } catch (err) {
-      handleApiError(err, err instanceof Error && 'response' in err ? (err as any).response : undefined)
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'An unexpected error occurred. Please try again.');
+      setInsight("");
     } finally {
       setIsLoading(false)
     }

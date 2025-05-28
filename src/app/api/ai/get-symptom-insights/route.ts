@@ -20,11 +20,13 @@ const safetySettings = [
 // Define the symptoms schema
 const symptomsSchema = z.object({
   symptoms: z.string()
-    .min(10, 'Please provide more detailed symptoms (minimum 10 characters)')
-    .max(1000, 'Input is too long. Please keep it under 1000 characters')
-    .refine(
-      (value) => !/<script>|javascript:|on\w+=|data:/i.test(value),
-      'Invalid input detected'
+    .trim()
+    .min(1, "Symptom description cannot be empty.")
+    .min(15, "Please provide a more detailed description (at least 15 characters).")
+    .max(1000, "Symptom description is too long (max 1000 characters).")
+    .regex(
+      /^(?!.*(<script>|javascript:|on\w+=|data:))/i,
+      "Input contains disallowed characters or patterns."
     ),
 });
 
@@ -43,7 +45,7 @@ export async function POST(request: Request) {
   // Protect this endpoint
   const session = await getServerSession(authOptions);
   if (!session?.user) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    return NextResponse.json({ error: 'You must be logged in to use this feature.' }, { status: 401 });
   }
 
   let requestBody: unknown;
@@ -54,16 +56,10 @@ export async function POST(request: Request) {
     const validation = symptomsSchema.safeParse(requestBody);
     
     if (!validation.success) {
-      const fieldErrors = validation.error.flatten().fieldErrors;
-      const errorMessage = Object.entries(fieldErrors)
-        .map(([field, errors]) => `${field}: ${errors.join(', ')}`)
-        .join('; ');
-        
       return NextResponse.json(
         { 
-          error: 'Invalid input provided',
-          message: errorMessage,
-          details: fieldErrors 
+          error: "Invalid input",
+          details: validation.error.flatten().fieldErrors.symptoms
         },
         { status: 400 }
       );
@@ -77,8 +73,8 @@ export async function POST(request: Request) {
     if (rateLimitInfo.remaining === 0) {
       return NextResponse.json({
         error: 'Rate limit exceeded',
-        message: `You've reached the maximum number of requests. Please try again in ${rateLimitInfo.resetIn} seconds.`,
-        resetIn: rateLimitInfo.resetIn
+        message: `You've reached the maximum number of requests. Please try again in ${rateLimitInfo.reset} seconds.`,
+        reset: rateLimitInfo.reset
       }, { 
         status: 429,
         headers: rateLimiter.getRateLimitHeaders(rateLimitInfo)
@@ -103,10 +99,22 @@ DO NOT SUGGEST SPECIFIC TREATMENTS, MEDICATIONS, OR DOSAGES.
 
 DO NOT ASK FOLLOW-UP QUESTIONS TO GATHER MORE MEDICAL DETAILS FROM THE USER.
 
+If the user's input is too vague, clearly inappropriate for your function (e.g., asking for recipes, coding help, historical facts, opinions, or any non-health related topic), or describes what seems to be a very serious medical emergency, you MUST politely state that you cannot provide specific information on that topic and that your purpose is to offer general health-related information.
+
+Examples of how to respond to irrelevant inputs:
+
+If asked "What's the weather like?": "I am designed to provide general health information and cannot provide weather updates. Do you have a health-related question?"
+
+If asked "Can you help me with my homework?": "My apologies, but I can only provide general health-related information. I'm not equipped to help with homework."
+
+If asked "What is your opinion on the new movie?": "As an AI health assistant, I don't have personal opinions. My purpose is to offer general health information. Is there a health topic I can help you with?"
+
+If the input seems to describe a very serious medical emergency (e.g., "I think I'm having a heart attack right now"): "I cannot provide medical advice or assistance in an emergency. If you believe you are experiencing a medical emergency, please contact your local emergency services immediately or go to the nearest emergency room."
+
+Do not engage in conversation about the off-topic subject. Just a polite refusal and a reminder of your purpose.
+
 ALWAYS INCLUDE THE FOLLOWING DISCLAIMER VERBATIM AT THE VERY END OF YOUR RESPONSE:
 "Disclaimer: This information is not medical advice. Please consult with a qualified healthcare professional for any health concerns or before making any decisions related to your health."
-
-If the user's input is too vague, clearly inappropriate for your function, or describes what seems to be a very serious medical emergency, you must politely state that you cannot provide specific information and that they should seek immediate medical attention from a healthcare professional.
 
 Keep your response to a helpful length, focusing on general information.`;
 
