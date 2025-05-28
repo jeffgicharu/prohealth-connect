@@ -6,6 +6,12 @@ interface ServiceFilters {
   sortOrder?: 'asc' | 'desc';
 }
 
+// Create a type for the selected fields to ensure consistency
+type ServiceWithSelectedFields = Pick<Service, 
+  'id' | 'name' | 'description' | 'price' | 'category' | 'imageUrl' | 
+  'duration' | 'createdAt' | 'updatedAt' | 'practitionerName'
+>;
+
 export class ServiceService {
   private static instance: ServiceService;
 
@@ -18,7 +24,7 @@ export class ServiceService {
     return this.instance;
   }
 
-  async getAllServices(filters?: ServiceFilters): Promise<Service[]> {
+  async getAllServices(filters?: ServiceFilters): Promise<ServiceWithSelectedFields[]> {
     try {
       const orderBy: Prisma.ServiceOrderByWithRelationInput = filters?.sortBy
         ? { [filters.sortBy]: filters.sortOrder || 'asc' }
@@ -32,6 +38,8 @@ export class ServiceService {
           price: true,
           category: true,
           imageUrl: true,
+          duration: true,           // Added missing field
+          practitionerName: true,   // Added missing field
           createdAt: true,
           updatedAt: true,
         },
@@ -45,7 +53,7 @@ export class ServiceService {
     }
   }
 
-  async getServiceById(serviceId: string): Promise<Service | null> {
+  async getServiceById(serviceId: string): Promise<ServiceWithSelectedFields | null> {
     try {
       const service = await prisma.service.findUnique({
         where: { id: serviceId },
@@ -57,7 +65,7 @@ export class ServiceService {
           category: true,
           imageUrl: true,
           duration: true,
-          availability: true,
+          practitionerName: true,   // Added missing field here too
           createdAt: true,
           updatedAt: true,
         }
@@ -69,4 +77,4 @@ export class ServiceService {
       throw new Error('Failed to fetch service');
     }
   }
-} 
+}
