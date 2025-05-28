@@ -149,7 +149,7 @@ export default function ContactPage() {
                       <div className="w-12 h-12 bg-brand-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                         <info.icon className="w-6 h-6 text-brand-primary" />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <h3 className="font-semibold text-brand-dark mb-2">{info.title}</h3>
                         {info.details.map((detail, idx) => (
                           <p key={idx} className="text-brand-light-gray break-words">
