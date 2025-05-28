@@ -12,6 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import toast from 'react-hot-toast';
 import { LoadingButton } from "@/components/ui/loading-button"
 import { handleApiError } from '@/lib/utils/errorHandling';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
 // recreating the `Stripe` object on every render.
@@ -27,6 +30,16 @@ interface MpesaResponse {
   errorMessage?: string;
   CustomerMessage?: string;
 }
+
+// Define the M-Pesa form schema
+const mpesaFormSchema = z.object({
+  phoneNumber: z.string()
+    .regex(/^254\d{9}$/, "Phone number must be in format 254XXXXXXXXX (e.g., 254712345678)")
+    .min(12, "Phone number must be 12 digits")
+    .max(12, "Phone number must be 12 digits"),
+});
+
+type MpesaFormData = z.infer<typeof mpesaFormSchema>;
 
 // CheckoutForm component
 function CheckoutForm({ bookingId, bookingAmount }: { bookingId: string, bookingAmount: number }) {
@@ -100,6 +113,84 @@ function CheckoutForm({ bookingId, bookingAmount }: { bookingId: string, booking
   );
 }
 
+// M-Pesa Payment Form component
+function MpesaPaymentForm({ bookingId, bookingAmount }: { bookingId: string, bookingAmount: number }) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<MpesaFormData>({
+    resolver: zodResolver(mpesaFormSchema),
+    mode: "onTouched"
+  });
+
+  const onSubmit = async (data: MpesaFormData) => {
+    try {
+      const response = await fetch('/api/mpesa/stk-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId, phoneNumber: data.phoneNumber }),
+      });
+      const responseData: MpesaResponse = await response.json();
+      
+      if (!response.ok || responseData.ResponseCode !== "0") {
+        // Map M-Pesa error codes to user-friendly messages
+        const errorMessages: { [key: string]: string } = {
+          "1": "The M-Pesa service is currently unavailable. Please try again later.",
+          "2": "Your M-Pesa account has insufficient funds. Please top up and try again.",
+          "3": "The phone number is not registered for M-Pesa. Please use a registered M-Pesa number.",
+          "4": "The transaction was cancelled. Please try again if you wish to proceed.",
+          "5": "The transaction has expired. Please initiate a new payment.",
+          "6": "The M-Pesa service is temporarily unavailable. Please try again in a few minutes.",
+          "7": "Invalid phone number format. Please enter a valid M-Pesa number starting with 254.",
+          "8": "The transaction amount is too low. Please contact support for assistance.",
+          "9": "The transaction amount is too high. Please contact support for assistance.",
+          "10": "Your M-Pesa account is inactive. Please contact Safaricom for assistance.",
+        };
+
+        const errorMessage = errorMessages[responseData.ResponseCode] || 
+          responseData.errorMessage || 
+          responseData.CustomerMessage || 
+          'Unable to process M-Pesa payment. Please try again or contact support if the issue persists.';
+        
+        throw new Error(errorMessage);
+      }
+
+      const successMessage = `Payment request sent to ${data.phoneNumber}. Please check your phone and enter your M-Pesa PIN to complete the payment of Ksh ${bookingAmount.toFixed(2)}.`;
+      toast.success(successMessage);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unable to process M-Pesa payment. Please try again or contact support if the issue persists.';
+      console.error("M-Pesa payment error:", err);
+      toast.error(errorMessage);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="space-y-2">
+        <Input 
+          type="tel" 
+          placeholder="M-Pesa Number (e.g., 254712345678)" 
+          {...register("phoneNumber")}
+          disabled={isSubmitting}
+          className="border-brand-light-gray/30 focus:border-brand-primary"
+        />
+        {errors.phoneNumber && (
+          <p className="text-sm text-red-500 mt-1">{errors.phoneNumber.message}</p>
+        )}
+      </div>
+      <LoadingButton
+        type="submit"
+        className="w-full bg-green-600 text-white hover:bg-green-700 py-3 text-lg"
+        isLoading={isSubmitting}
+        loadingText="Initiating..."
+      >
+        Pay Ksh {bookingAmount.toFixed(2)} with M-Pesa
+      </LoadingButton>
+    </form>
+  );
+}
+
 // Main Payment Page Component
 export default function PaymentPage() {
   const params = useParams();
@@ -107,8 +198,6 @@ export default function PaymentPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [bookingAmount, setBookingAmount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [mpesaPhoneNumber, setMpesaPhoneNumber] = useState('');
-  const [isMpesaLoading, setIsMpesaLoading] = useState(false);
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -132,7 +221,10 @@ export default function PaymentPage() {
             bookingId,
             status: res.status
           });
-          throw new Error(errorData.error || `Failed to initialize payment (${res.status})`);
+          if (res.status === 429) {
+            throw new Error('You\'ve made too many payment attempts. Please wait a moment before trying again.');
+          }
+          throw new Error(errorData.error || errorData.message || `Failed to initialize payment (${res.status})`);
         }
         return res.json();
       })
@@ -153,35 +245,6 @@ export default function PaymentPage() {
       setLoading(false);
     }
   }, [status, bookingId, router]);
-
-  const handleMpesaPayment = async () => {
-    if (!mpesaPhoneNumber.match(/^254\d{9}$/)) {
-      toast.error("Please enter a valid M-Pesa number starting with 254 followed by 9 digits (e.g., 254712345678).");
-      return;
-    }
-    setIsMpesaLoading(true);
-    try {
-      const response = await fetch('/api/mpesa/stk-push', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingId, phoneNumber: mpesaPhoneNumber }),
-      });
-      const data: MpesaResponse = await response.json();
-      if (!response.ok || data.ResponseCode !== "0") {
-        throw new Error(data.errorMessage || data.CustomerMessage || 'Failed to initiate M-Pesa payment.');
-      }
-      const successMessage = `Payment request sent to ${mpesaPhoneNumber}. Please check your phone and enter your M-Pesa PIN to complete the payment of Ksh ${bookingAmount.toFixed(2)}.`;
-      toast.success(successMessage);
-    } catch (err) {
-      console.error("M-Pesa payment error:", err);
-      const errorMessage = err instanceof Error 
-        ? err.message 
-        : "Unable to process M-Pesa payment. Please try again or contact support if the issue persists.";
-      toast.error(errorMessage);
-    } finally {
-      setIsMpesaLoading(false);
-    }
-  };
 
   if (status === 'loading' || loading) {
     return (
@@ -233,23 +296,10 @@ export default function PaymentPage() {
               </Elements>
             </TabsContent>
             <TabsContent value="mpesa">
-              <div className="space-y-4">
-                <Input 
-                  type="tel" 
-                  placeholder="M-Pesa Number (e.g., 254712345678)" 
-                  value={mpesaPhoneNumber}
-                  onChange={(e) => setMpesaPhoneNumber(e.target.value)}
-                  disabled={isMpesaLoading}
-                />
-                <LoadingButton
-                  onClick={handleMpesaPayment}
-                  className="w-full bg-green-600 text-white hover:bg-green-700 py-3 text-lg"
-                  isLoading={isMpesaLoading}
-                  loadingText="Initiating..."
-                >
-                  Pay Ksh {bookingAmount.toFixed(2)} with M-Pesa
-                </LoadingButton>
-              </div>
+              <MpesaPaymentForm 
+                bookingId={bookingId} 
+                bookingAmount={bookingAmount} 
+              />
             </TabsContent>
           </Tabs>
         </CardContent>

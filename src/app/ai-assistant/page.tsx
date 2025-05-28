@@ -50,17 +50,16 @@ export default function AIAssistantPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to get insights.')
+        if (response.status === 429) {
+          throw new Error('You\'ve made too many requests for AI insights. Please wait a moment before trying again.');
+        }
+        throw new Error(data.error || data.message || 'Failed to get insights.');
       }
 
       setInsight(data.insight)
       toast.success('AI insights generated successfully!')
     } catch (err) {
-      if (err instanceof Error && 'response' in err) {
-        handleApiError(err, (err as any).response)
-      } else {
-        handleApiError(err)
-      }
+      handleApiError(err, err instanceof Error && 'response' in err ? (err as any).response : undefined)
     } finally {
       setIsLoading(false)
     }

@@ -12,7 +12,6 @@ declare module 'next-auth' {
       email?: string | null;
       image?: string | null;
       role?: string | null;
-      emailVerified?: Date | null;
     };
   }
 }
@@ -23,7 +22,6 @@ declare module 'next-auth' {
     id: string;
     name?: string | null;
     email?: string | null;
-    emailVerified?: Date | null;
   }
 }
 
@@ -64,7 +62,6 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           name: user.name,
           email: user.email,
-          emailVerified: user.emailVerified,
         };
       }
     })
@@ -83,14 +80,12 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
-        token.emailVerified = user.emailVerified;
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
         session.user.id = token.id as string;
-        session.user.emailVerified = token.emailVerified as Date | null;
       }
       return session;
     },

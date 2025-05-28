@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,46 +8,55 @@ import { Label } from "@/components/ui/label"
 import { LoadingButton } from "@/components/ui/loading-button"
 import toast from 'react-hot-toast'
 import { handleApiError } from '@/lib/utils/errorHandling'
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import { useState } from "react"
+
+// Define the signup form schema
+const signupFormSchema = z.object({
+  firstName: z.string()
+    .min(2, "First name must be at least 2 characters")
+    .max(50, "First name must be less than 50 characters"),
+  lastName: z.string()
+    .min(2, "Last name must be at least 2 characters")
+    .max(50, "Last name must be less than 50 characters"),
+  email: z.string()
+    .email("Please enter a valid email address"),
+  phone: z.string()
+    .regex(/^254\d{9}$/, "Phone number must be in format 254XXXXXXXXX (e.g., 254712345678)")
+    .min(12, "Phone number must be 12 digits")
+    .max(12, "Phone number must be 12 digits"),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .regex(/[!@#$%^&*]/, "Password must contain at least one special character (!@#$%^&*)"),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
+type SignupFormData = z.infer<typeof signupFormSchema>;
 
 export default function SignupPage() {
   const router = useRouter()
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-  })
   const [isLoading, setIsLoading] = useState(false)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid, isDirty },
+    reset,
+    setError
+  } = useForm<SignupFormData>({
+    resolver: zodResolver(signupFormSchema),
+    mode: "onTouched"
+  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target
-    setFormData(prev => ({ ...prev, password: value }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const onSubmit = async (data: SignupFormData) => {
     setIsLoading(true)
-
-    // Validate password
-    if (formData.password.length < 8) {
-      toast.error("Password must be at least 8 characters long")
-      setIsLoading(false)
-      return
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match")
-      setIsLoading(false)
-      return
-    }
-
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -56,24 +64,41 @@ export default function SignupPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          phone: data.phone,
+          password: data.password,
         }),
       })
 
-      const data = await response.json()
+      const responseData = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.message || 'Registration failed')
+        if (responseData.details?.fieldErrors) {
+          // Handle field-specific errors
+          Object.entries(responseData.details.fieldErrors).forEach(([field, errors]) => {
+            if (Array.isArray(errors) && errors.length > 0) {
+              setError(field as keyof SignupFormData, {
+                type: 'server',
+                message: errors[0]
+              });
+            }
+          });
+        } else {
+          // Use server-provided error message or fallback
+          throw new Error(responseData.error || responseData.message || 'Registration failed. Please check your input and try again.');
+        }
+        return;
       }
 
-      toast.success("Registration successful! Please check your email to verify your account.")
+      toast.success("Registration successful! You can now sign in to your account.")
+      reset();
       router.push('/login')
     } catch (error) {
-      handleApiError(error)
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred. Please try again or contact support if the issue persists.';
+      console.error('Registration error:', error);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false)
     }
@@ -88,89 +113,90 @@ export default function SignupPage() {
             Enter your information to create your account
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First name</Label>
                 <Input
                   id="firstName"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  required
-                  disabled={isLoading}
+                  {...register("firstName")}
+                  className="border-brand-light-gray/30 focus:border-brand-primary"
                 />
+                {errors.firstName && (
+                  <p className="text-sm text-red-500 mt-1">{errors.firstName.message}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Last name</Label>
                 <Input
                   id="lastName"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  required
-                  disabled={isLoading}
+                  {...register("lastName")}
+                  className="border-brand-light-gray/30 focus:border-brand-primary"
                 />
+                {errors.lastName && (
+                  <p className="text-sm text-red-500 mt-1">{errors.lastName.message}</p>
+                )}
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
-                name="email"
                 type="email"
                 placeholder="name@example.com"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                disabled={isLoading}
+                {...register("email")}
+                className="border-brand-light-gray/30 focus:border-brand-primary"
               />
+              {errors.email && (
+                <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone number</Label>
               <Input
                 id="phone"
-                name="phone"
                 type="tel"
-                placeholder="+254 700 000000"
-                value={formData.phone}
-                onChange={handleChange}
-                required
-                disabled={isLoading}
+                placeholder="254XXXXXXXXX"
+                {...register("phone")}
+                className="border-brand-light-gray/30 focus:border-brand-primary"
               />
+              {errors.phone && (
+                <p className="text-sm text-red-500 mt-1">{errors.phone.message}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
-                name="password"
                 type="password"
-                value={formData.password}
-                onChange={handlePasswordChange}
-                required
-                disabled={isLoading}
+                {...register("password")}
+                className="border-brand-light-gray/30 focus:border-brand-primary"
               />
+              {errors.password && (
+                <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm password</Label>
               <Input
                 id="confirmPassword"
-                name="confirmPassword"
                 type="password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-                disabled={isLoading}
+                {...register("confirmPassword")}
+                className="border-brand-light-gray/30 focus:border-brand-primary"
               />
+              {errors.confirmPassword && (
+                <p className="text-sm text-red-500 mt-1">{errors.confirmPassword.message}</p>
+              )}
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <LoadingButton 
               type="submit" 
               className="w-full" 
+              disabled={!isValid || !isDirty}
               isLoading={isLoading}
-              loadingText="Creating account..."
+              loadingText="Creating Account..."
             >
               Create Account
             </LoadingButton>

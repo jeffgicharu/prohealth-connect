@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/authOptions';
 import prisma from '@/lib/prisma';
 import rateLimiter from '@/lib/utils/rateLimiter';
+import { z } from 'zod';
 
 const MODEL_NAME = "gemini-2.0-flash";
 const API_KEY = process.env.GOOGLE_GEMINI_API_KEY;
@@ -16,37 +17,16 @@ const safetySettings = [
   { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
 ];
 
-// Input validation function
-function validateInput(symptoms: string): { isValid: boolean; error?: string } {
-  if (!symptoms || typeof symptoms !== 'string') {
-    return { isValid: false, error: 'Symptom description is required.' };
-  }
-
-  const trimmedSymptoms = symptoms.trim();
-  if (trimmedSymptoms.length === 0) {
-    return { isValid: false, error: 'Symptom description cannot be empty.' };
-  }
-
-  if (trimmedSymptoms.length > 1000) {
-    return { isValid: false, error: 'Input is too long. Please keep it under 1000 characters.' };
-  }
-
-  // Basic content validation
-  const suspiciousPatterns = [
-    /<script>/i,
-    /javascript:/i,
-    /on\w+=/i,
-    /data:/i,
-  ];
-
-  for (const pattern of suspiciousPatterns) {
-    if (pattern.test(trimmedSymptoms)) {
-      return { isValid: false, error: 'Invalid input detected.' };
-    }
-  }
-
-  return { isValid: true };
-}
+// Define the symptoms schema
+const symptomsSchema = z.object({
+  symptoms: z.string()
+    .min(10, 'Please provide more detailed symptoms (minimum 10 characters)')
+    .max(1000, 'Input is too long. Please keep it under 1000 characters')
+    .refine(
+      (value) => !/<script>|javascript:|on\w+=|data:/i.test(value),
+      'Invalid input detected'
+    ),
+});
 
 export async function POST(request: Request) {
   // Early API key check
@@ -66,21 +46,43 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
 
-  const body = await request.json();
-  const { symptoms } = body;
-
+  let requestBody: unknown;
   try {
+    requestBody = await request.json();
+    
+    // Validate input using Zod schema
+    const validation = symptomsSchema.safeParse(requestBody);
+    
+    if (!validation.success) {
+      const fieldErrors = validation.error.flatten().fieldErrors;
+      const errorMessage = Object.entries(fieldErrors)
+        .map(([field, errors]) => `${field}: ${errors.join(', ')}`)
+        .join('; ');
+        
+      return NextResponse.json(
+        { 
+          error: 'Invalid input provided',
+          message: errorMessage,
+          details: fieldErrors 
+        },
+        { status: 400 }
+      );
+    }
+
+    const { symptoms } = validation.data;
+
     // Rate limiting
     const rateLimitInfo = rateLimiter.limit(session.user.id);
     
     if (rateLimitInfo.remaining === 0) {
-      return rateLimiter.createRateLimitResponse(rateLimitInfo);
-    }
-
-    // Input validation
-    const validation = validateInput(symptoms);
-    if (!validation.isValid) {
-      return NextResponse.json({ error: validation.error }, { status: 400 });
+      return NextResponse.json({
+        error: 'Rate limit exceeded',
+        message: `You've reached the maximum number of requests. Please try again in ${rateLimitInfo.resetIn} seconds.`,
+        resetIn: rateLimitInfo.resetIn
+      }, { 
+        status: 429,
+        headers: rateLimiter.getRateLimitHeaders(rateLimitInfo)
+      });
     }
 
     const model = genAI.getGenerativeModel({ model: MODEL_NAME, safetySettings });
@@ -129,7 +131,9 @@ Keep your response to a helpful length, focusing on general information.`;
         });
 
         return NextResponse.json({ 
-          error: `AI response blocked due to: ${response.promptFeedback.blockReason}. Please rephrase your query or ensure it's appropriate.` 
+          error: 'Content blocked by safety filters',
+          message: `Your request was blocked because it may contain inappropriate content. Please rephrase your symptoms in a more appropriate way.`,
+          details: response.promptFeedback.blockReason
         }, { status: 400 });
       }
 
@@ -145,7 +149,8 @@ Keep your response to a helpful length, focusing on general information.`;
       });
 
       return NextResponse.json({ 
-        error: 'Failed to get insights from AI. The AI did not provide a response.' 
+        error: 'AI service unavailable',
+        message: 'We were unable to process your request at this time. Please try again in a few moments.'
       }, { status: 500 });
     }
 
@@ -167,14 +172,23 @@ Keep your response to a helpful length, focusing on general information.`;
 
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-    console.error("Error getting AI symptom insights (Gemini):", error);
+    console.error("Error getting AI symptom insights (Gemini):", {
+      error,
+      userId: session?.user?.id,
+      timestamp: new Date().toISOString(),
+      input: requestBody && typeof requestBody === 'object' && 'symptoms' in requestBody 
+        ? String(requestBody.symptoms) 
+        : ''
+    });
 
-    // Log the error
+    // Log the error to the database
     if (session?.user?.id) {
       await prisma.aIInteractionLog.create({
         data: {
           userId: session.user.id,
-          input: symptoms,
+          input: requestBody && typeof requestBody === 'object' && 'symptoms' in requestBody 
+            ? String(requestBody.symptoms) 
+            : '',
           response: '',
           status: 'ERROR',
           error: errorMessage
@@ -182,8 +196,29 @@ Keep your response to a helpful length, focusing on general information.`;
       });
     }
 
+    // Map common errors to user-friendly messages
+    const errorMessages: { [key: string]: string } = {
+      "API_KEY_MISSING": "The AI service is currently unavailable. Please try again later.",
+      "INVALID_REQUEST": "Your request could not be processed. Please check your input and try again.",
+      "RATE_LIMIT_EXCEEDED": "You've made too many requests. Please wait a moment before trying again.",
+      "SERVICE_UNAVAILABLE": "The AI service is temporarily unavailable. Please try again later.",
+      "INVALID_RESPONSE": "We received an unexpected response. Please try again.",
+    };
+
+    // Check if the error message matches any known error patterns
+    for (const [key, message] of Object.entries(errorMessages)) {
+      if (errorMessage.includes(key)) {
+        return NextResponse.json({ 
+          error: message,
+          message: message
+        }, { status: 400 });
+      }
+    }
+
+    // For unknown errors, return a generic message
     return NextResponse.json({ 
-      error: 'An error occurred while processing your request with the AI service.' 
+      error: 'Service error',
+      message: 'We encountered an unexpected error while processing your request. Our team has been notified.',
     }, { status: 500 });
   }
 }

@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
@@ -9,38 +8,61 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LoadingButton } from "@/components/ui/loading-button"
 import toast from 'react-hot-toast'
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+
+// Define the login form schema
+const loginFormSchema = z.object({
+  email: z.string()
+    .email("Please enter a valid email address"),
+  password: z.string()
+    .min(1, "Password is required"),
+});
+
+type LoginFormData = z.infer<typeof loginFormSchema>;
 
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/'
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginFormSchema),
+    mode: "onTouched"
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
+  const onSubmit = async (data: LoginFormData) => {
     try {
       const result = await signIn('credentials', {
         redirect: false,
-        email,
-        password,
+        email: data.email,
+        password: data.password,
       })
 
       if (result?.error) {
-        toast.error(result.error === "CredentialsSignin" ? "Invalid email or password." : result.error)
+        // Map common error types to user-friendly messages
+        const errorMessages: { [key: string]: string } = {
+          "CredentialsSignin": "Invalid email or password. Please check your credentials and try again.",
+          "EmailNotVerified": "Please verify your email address before signing in. Check your inbox for the verification link.",
+          "AccountLocked": "Your account has been temporarily locked due to multiple failed attempts. Please try again later or contact support.",
+          "AccountDisabled": "This account has been disabled. Please contact support for assistance.",
+        };
+
+        const errorMessage = errorMessages[result.error] || result.error;
+        throw new Error(errorMessage);
       } else if (result?.ok) {
         toast.success("Successfully signed in!")
         router.push(callbackUrl)
       }
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred. Please try again or contact support if the issue persists.';
       console.error('Login error:', err);
-      toast.error("An unexpected error occurred.")
-    } finally {
-      setIsLoading(false)
+      toast.error(errorMessage);
     }
   }
 
@@ -53,7 +75,7 @@ export default function LoginPage() {
             Enter your credentials to access your account
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -61,11 +83,12 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
+                {...register("email")}
+                className="border-brand-light-gray/30 focus:border-brand-primary"
               />
+              {errors.email && (
+                <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
+              )}
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -80,18 +103,19 @@ export default function LoginPage() {
               <Input
                 id="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
+                {...register("password")}
+                className="border-brand-light-gray/30 focus:border-brand-primary"
               />
+              {errors.password && (
+                <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>
+              )}
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <LoadingButton 
               type="submit" 
               className="w-full" 
-              isLoading={isLoading}
+              isLoading={isSubmitting}
               loadingText="Signing in..."
             >
               Sign In

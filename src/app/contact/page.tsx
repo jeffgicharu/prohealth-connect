@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect, useRef } from "react"
+import { useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,17 +10,40 @@ import { MapPin, Phone, Mail, Clock, Send } from "lucide-react"
 import { LoadingButton } from "@/components/ui/loading-button"
 import toast from 'react-hot-toast'
 import { handleApiError } from '@/lib/utils/errorHandling'
-import { Button } from "@/components/ui/button"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+
+// Define the contact form schema
+const contactFormSchema = z.object({
+  name: z.string()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name must be less than 100 characters"),
+  email: z.string()
+    .email("Please enter a valid email address"),
+  subject: z.string()
+    .min(5, "Subject must be at least 5 characters")
+    .max(200, "Subject must be less than 200 characters"),
+  message: z.string()
+    .min(10, "Message must be at least 10 characters")
+    .max(1000, "Message must be less than 1000 characters"),
+});
+
+type ContactFormData = z.infer<typeof contactFormSchema>;
 
 export default function ContactPage() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
-  })
-  const [isLoading, setIsLoading] = useState(false)
   const observerRef = useRef<IntersectionObserver | null>(null)
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+    setError
+  } = useForm<ContactFormData>({
+    resolver: zodResolver(contactFormSchema),
+    mode: "onTouched"
+  });
 
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
@@ -41,40 +63,42 @@ export default function ContactPage() {
     return () => observerRef.current?.disconnect()
   }, [])
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
+  const onSubmit = async (data: ContactFormData) => {
     try {
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(data),
       })
 
-      const data = await response.json()
+      const responseData = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to send message')
+        if (responseData.details?.fieldErrors) {
+          // Handle field-specific errors
+          Object.entries(responseData.details.fieldErrors).forEach(([field, errors]) => {
+            if (Array.isArray(errors) && errors.length > 0) {
+              setError(field as keyof ContactFormData, {
+                type: 'server',
+                message: errors[0]
+              });
+            }
+          });
+        } else {
+          // Use server-provided error message or fallback
+          throw new Error(responseData.error || responseData.message || 'Unable to send your message. Please check your input and try again.');
+        }
+        return;
       }
 
       toast.success('Message sent successfully! We will get back to you soon.')
-      setFormData({
-        name: "",
-        email: "",
-        subject: "",
-        message: "",
-      })
+      reset();
     } catch (error) {
-      handleApiError(error)
-    } finally {
-      setIsLoading(false)
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred. Please try again or contact us directly via phone or email.';
+      console.error('Contact form error:', error);
+      toast.error(errorMessage);
     }
   }
 
@@ -163,7 +187,7 @@ export default function ContactPage() {
                 </p>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name" className="text-brand-dark font-medium">
@@ -173,12 +197,13 @@ export default function ContactPage() {
                         id="name"
                         type="text"
                         placeholder="Your full name"
-                        value={formData.name}
-                        onChange={(e) => handleInputChange("name", e.target.value)}
+                        {...register("name")}
                         className="border-brand-light-gray/30 focus:border-brand-primary"
-                        required
-                        disabled={isLoading}
+                        disabled={isSubmitting}
                       />
+                      {errors.name && (
+                        <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email" className="text-brand-dark font-medium">
@@ -188,12 +213,13 @@ export default function ContactPage() {
                         id="email"
                         type="email"
                         placeholder="your@email.com"
-                        value={formData.email}
-                        onChange={(e) => handleInputChange("email", e.target.value)}
+                        {...register("email")}
                         className="border-brand-light-gray/30 focus:border-brand-primary"
-                        required
-                        disabled={isLoading}
+                        disabled={isSubmitting}
                       />
+                      {errors.email && (
+                        <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
+                      )}
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -204,12 +230,13 @@ export default function ContactPage() {
                       id="subject"
                       type="text"
                       placeholder="What is this regarding?"
-                      value={formData.subject}
-                      onChange={(e) => handleInputChange("subject", e.target.value)}
+                      {...register("subject")}
                       className="border-brand-light-gray/30 focus:border-brand-primary"
-                      required
-                      disabled={isLoading}
+                      disabled={isSubmitting}
                     />
+                    {errors.subject && (
+                      <p className="text-sm text-red-500 mt-1">{errors.subject.message}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="message" className="text-brand-dark font-medium">
@@ -218,17 +245,18 @@ export default function ContactPage() {
                     <Textarea
                       id="message"
                       placeholder="Please provide details about your inquiry..."
-                      value={formData.message}
-                      onChange={(e) => handleInputChange("message", e.target.value)}
+                      {...register("message")}
                       className="min-h-32 border-brand-light-gray/30 focus:border-brand-primary resize-none"
-                      required
-                      disabled={isLoading}
+                      disabled={isSubmitting}
                     />
+                    {errors.message && (
+                      <p className="text-sm text-red-500 mt-1">{errors.message.message}</p>
+                    )}
                   </div>
                   <LoadingButton
                     type="submit"
                     className="w-full bg-brand-primary hover:bg-brand-primary-hover text-brand-white h-12 text-lg font-semibold transition-all duration-200"
-                    isLoading={isLoading}
+                    isLoading={isSubmitting}
                     loadingText="Sending..."
                   >
                     <Send className="w-5 h-5 mr-2" />
@@ -248,9 +276,6 @@ export default function ContactPage() {
               <p className="text-brand-light-gray mb-6">
                 Before reaching out, you might find the answer to your question in our FAQ section.
               </p>
-              <Button variant="outline" className="border-brand-primary text-brand-primary hover:bg-brand-primary/10">
-                View FAQ
-              </Button>
             </CardContent>
           </Card>
         </div>

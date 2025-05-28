@@ -1,62 +1,50 @@
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
-// Password validation function
-const validatePassword = (password: string): { isValid: boolean; error?: string } => {
-  if (password.length < 8) {
-    return { isValid: false, error: 'Password must be at least 8 characters long' };
-  }
-  if (!/[A-Z]/.test(password)) {
-    return { isValid: false, error: 'Password must contain at least one uppercase letter' };
-  }
-  if (!/[a-z]/.test(password)) {
-    return { isValid: false, error: 'Password must contain at least one lowercase letter' };
-  }
-  if (!/[0-9]/.test(password)) {
-    return { isValid: false, error: 'Password must contain at least one number' };
-  }
-  if (!/[!@#$%^&*]/.test(password)) {
-    return { isValid: false, error: 'Password must contain at least one special character (!@#$%^&*)' };
-  }
-  return { isValid: true };
-};
-
-// Email validation function
-const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
+// Define the registration schema
+const registerSchema = z.object({
+  firstName: z.string()
+    .min(2, 'First name must be at least 2 characters long')
+    .max(50, 'First name must be less than 50 characters'),
+  lastName: z.string()
+    .min(2, 'Last name must be at least 2 characters long')
+    .max(50, 'Last name must be less than 50 characters'),
+  email: z.string()
+    .email('Invalid email format')
+    .min(1, 'Email is required'),
+  phone: z.string()
+    .regex(/^254\d{9}$/, 'Phone number must be in format 254XXXXXXXXX (e.g., 254712345678)')
+    .min(12, 'Phone number must be 12 digits')
+    .max(12, 'Phone number must be 12 digits'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters long')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[!@#$%^&*]/, 'Password must contain at least one special character (!@#$%^&*)'),
+});
 
 export async function POST(request: Request) {
+  let body: Record<string, unknown> = {};
   try {
-    const body = await request.json();
-    const { name, email, password } = body;
-
-    // Input validation
-    if (!name || !email || !password) {
+    body = await request.json();
+    
+    // Validate input using Zod schema
+    const validation = registerSchema.safeParse(body);
+    
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'All fields are required' },
+        { 
+          error: 'Invalid input', 
+          details: validation.error.flatten().fieldErrors 
+        },
         { status: 400 }
       );
     }
 
-    // Validate email format
-    if (!validateEmail(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
-    }
-
-    // Validate password strength
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
-      return NextResponse.json(
-        { error: passwordValidation.error },
-        { status: 400 }
-      );
-    }
+    const { firstName, lastName, email, phone, password } = validation.data;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -74,8 +62,9 @@ export async function POST(request: Request) {
 
     const newUser = await prisma.user.create({
       data: {
-        name,
+        name: `${firstName} ${lastName}`,
         email,
+        phone,
         password: hashedPassword,
       },
     });
@@ -86,27 +75,42 @@ export async function POST(request: Request) {
     return NextResponse.json(userWithoutPassword, { status: 201 });
 
   } catch (error) {
-    console.error("Registration error:", error);
+    // Log detailed error information for debugging
+    console.error("Registration error:", {
+      error,
+      email: body?.email,
+      timestamp: new Date().toISOString()
+    });
     
     // Handle specific Prisma errors
     if (error instanceof Error) {
-      if (error.message.includes('Unique constraint failed')) {
-        return NextResponse.json(
-          { error: 'An account with this email already exists' },
-          { status: 409 }
-        );
+      const errorMessages: { [key: string]: string } = {
+        "Unique constraint failed": "An account with this email already exists. Please use a different email or try logging in.",
+        "Invalid input": "The provided information is invalid. Please check your input and try again.",
+        "Connection": "Unable to connect to the database. Please try again later.",
+        "Timeout": "The request timed out. Please try again.",
+        "Validation": "The provided information doesn't meet our requirements. Please check the form and try again.",
+      };
+
+      // Check if the error message matches any known error patterns
+      for (const [key, message] of Object.entries(errorMessages)) {
+        if (error.message.includes(key)) {
+          return NextResponse.json({ error: message }, { status: 400 });
       }
-      if (error.message.includes('Invalid input')) {
+      }
+
+      // If it's a known Prisma error but not in our mapping, use a generic message
+      if (error.message.includes('Prisma') || error.message.includes('database')) {
         return NextResponse.json(
-          { error: 'Invalid input data' },
-          { status: 400 }
+          { error: 'Unable to create your account. Please try again or contact support.' },
+          { status: 500 }
         );
       }
     }
 
-    // Handle unexpected errors
+    // For unknown errors, return a generic message
     return NextResponse.json(
-      { error: 'An unexpected error occurred during registration' },
+      { error: 'Unable to create your account. Please try again or contact support if the issue persists.' },
       { status: 500 }
     );
   }

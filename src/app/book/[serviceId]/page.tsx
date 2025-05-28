@@ -30,13 +30,16 @@ export default function BookServicePage() {
         try {
           const res = await fetch(`/api/services/${serviceId}`);
           if (!res.ok) {
-            throw new Error('Failed to fetch service');
+            if (res.status === 429) {
+              throw new Error('You\'ve made too many requests. Please wait a moment before trying again.');
+            }
+            const errorData = await res.json();
+            throw new Error(errorData.message || errorData.error || 'Failed to fetch service');
           }
           const data = await res.json();
           setService(data);
         } catch (err) {
-          console.error('Error fetching service:', err);
-          toast.error("Failed to load service details.");
+          handleApiError(err);
         } finally {
           setIsLoading(false);
         }
@@ -56,14 +59,18 @@ export default function BookServicePage() {
     }
 
     setIsLoading(true);
+    try {
     const result = await createBooking(serviceId);
-    setIsLoading(false);
-
     if (result.error) {
       toast.error(result.error);
     } else if (result.success && result.booking) {
       toast.success(`${result.success} Your booking ID is ${result.booking.id}. You will proceed to payment next.`);
       router.push(`/dashboard/bookings?bookingId=${result.booking.id}`);
+      }
+    } catch (err) {
+      handleApiError(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 

@@ -8,7 +8,6 @@ declare module 'next-auth' {
   interface Session {
     user: {
       id: string;
-      emailVerified?: Date | null;
     } & DefaultSession['user']
   }
 
@@ -19,6 +18,5 @@ declare module 'next-auth' {
     id: string;
     name?: string | null;
     email?: string | null;
-    emailVerified?: Date | null;
   }
 } 

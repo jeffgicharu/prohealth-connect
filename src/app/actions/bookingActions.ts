@@ -3,6 +3,12 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/authOptions";
 import { BookingService } from "@/lib/services/booking";
+import { z } from "zod";
+
+// Define the booking schema
+const createBookingSchema = z.object({
+  serviceId: z.string().min(1, 'Service ID is required'),
+});
 
 export async function createBooking(serviceId: string) {
   const session = await getServerSession(authOptions);
@@ -11,15 +17,21 @@ export async function createBooking(serviceId: string) {
     return { error: "User not authenticated. Please log in to book a service." };
   }
 
-  if (!serviceId) {
-    return { error: "Service ID is required." };
+  // Validate input using Zod schema
+  const validation = createBookingSchema.safeParse({ serviceId });
+  
+  if (!validation.success) {
+    return { 
+      error: 'Invalid input', 
+      details: validation.error.flatten().fieldErrors 
+    };
   }
 
   try {
     const bookingService = BookingService.getInstance();
     const newBooking = await bookingService.createBooking({
       userId: session.user.id,
-      serviceId: serviceId,
+      serviceId: validation.data.serviceId,
       bookingDate: new Date(), // For MVP, set bookingDate to now.
                               // Later, this could come from a date picker.
     });
