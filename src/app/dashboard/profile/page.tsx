@@ -17,7 +17,7 @@ export default async function ProfilePage() {
 
   return (
     <div className="container mx-auto py-8">
-      <Card>
+      <Card className="shadow-md hover:shadow-lg focus-within:shadow-lg hover:scale-105 hover:-translate-y-1 focus-within:scale-105 focus-within:-translate-y-1 transition-all duration-300 ease-in-out border border-brand-light-gray/20 rounded-lg focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-2">
         <CardHeader>
           <CardTitle>Profile</CardTitle>
           <CardDescription>Your account information</CardDescription>

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useRef } from "react"
+import { useInView } from "react-intersection-observer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -31,7 +31,29 @@ const contactFormSchema = z.object({
 type ContactFormData = z.infer<typeof contactFormSchema>;
 
 export default function ContactPage() {
-  const observerRef = useRef<IntersectionObserver | null>(null)
+  // Intersection Observer hooks for scroll reveal
+  const { ref: headerRef, inView: headerInView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  })
+
+  const { ref: contactInfoRef, inView: contactInfoInView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 100,
+  })
+
+  const { ref: contactFormRef, inView: contactFormInView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 200,
+  })
+
+  const { ref: faqRef, inView: faqInView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 300,
+  })
 
   const {
     register,
@@ -43,24 +65,6 @@ export default function ContactPage() {
     resolver: zodResolver(contactFormSchema),
     mode: "onTouched"
   });
-
-  useEffect(() => {
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("revealed")
-          }
-        })
-      },
-      { threshold: 0.1 },
-    )
-
-    const elements = document.querySelectorAll(".scroll-reveal")
-    elements.forEach((el) => observerRef.current?.observe(el))
-
-    return () => observerRef.current?.disconnect()
-  }, [])
 
   const onSubmit = async (data: ContactFormData) => {
     try {
@@ -128,7 +132,12 @@ export default function ContactPage() {
     <div className="min-h-screen bg-brand-white py-12 px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         {/* Page Header */}
-        <div className="text-center mb-16 scroll-reveal">
+        <div 
+          ref={headerRef}
+          className={`text-center mb-16 transition-all duration-700 ease-out ${
+            headerInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+          }`}
+        >
           <h1 className="text-4xl md:text-5xl font-bold text-brand-dark mb-6">
             Contact <span className="text-brand-primary">Us</span>
           </h1>
@@ -139,11 +148,16 @@ export default function ContactPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact Information */}
-          <div className="scroll-reveal">
+          <div 
+            ref={contactInfoRef}
+            className={`transition-all duration-700 ease-out ${
+              contactInfoInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+            }`}
+          >
             <h2 className="text-2xl font-bold text-brand-dark mb-8">Get in Touch</h2>
             <div className="space-y-6">
               {contactInfo.map((info, index) => (
-                <Card key={index} className="border-brand-light-gray/20 hover:shadow-md transition-all duration-200">
+                <Card key={index} className="border-brand-light-gray/20 shadow-sm hover:shadow-lg hover:scale-102 hover:-translate-y-0.5 transition-all duration-300 ease-in-out rounded-lg">
                   <CardContent className="p-6">
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 bg-brand-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
@@ -177,8 +191,13 @@ export default function ContactPage() {
           </div>
 
           {/* Contact Form */}
-          <div className="scroll-reveal">
-            <Card className="border-brand-light-gray/20 shadow-lg">
+          <div 
+            ref={contactFormRef}
+            className={`transition-all duration-700 ease-out ${
+              contactFormInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+            }`}
+          >
+            <Card className="shadow-md hover:shadow-lg focus-within:shadow-lg hover:scale-105 hover:-translate-y-1 focus-within:scale-105 focus-within:-translate-y-1 transition-all duration-300 ease-in-out border-brand-light-gray/20 rounded-lg focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-2">
               <CardHeader>
                 <CardTitle className="text-2xl font-bold text-brand-dark">Send us a Message</CardTitle>
                 <p className="text-brand-light-gray">
@@ -198,10 +217,9 @@ export default function ContactPage() {
                         placeholder="Your full name"
                         {...register("name")}
                         className="border-brand-light-gray/30 focus:border-brand-primary"
-                        disabled={isSubmitting}
                       />
                       {errors.name && (
-                        <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
+                        <p className="text-red-500 text-sm">{errors.name.message}</p>
                       )}
                     </div>
                     <div className="space-y-2">
@@ -211,13 +229,12 @@ export default function ContactPage() {
                       <Input
                         id="email"
                         type="email"
-                        placeholder="your@email.com"
+                        placeholder="your.email@example.com"
                         {...register("email")}
                         className="border-brand-light-gray/30 focus:border-brand-primary"
-                        disabled={isSubmitting}
                       />
                       {errors.email && (
-                        <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
+                        <p className="text-red-500 text-sm">{errors.email.message}</p>
                       )}
                     </div>
                   </div>
@@ -231,10 +248,9 @@ export default function ContactPage() {
                       placeholder="What is this regarding?"
                       {...register("subject")}
                       className="border-brand-light-gray/30 focus:border-brand-primary"
-                      disabled={isSubmitting}
                     />
                     {errors.subject && (
-                      <p className="text-sm text-red-500 mt-1">{errors.subject.message}</p>
+                      <p className="text-red-500 text-sm">{errors.subject.message}</p>
                     )}
                   </div>
                   <div className="space-y-2">
@@ -243,22 +259,20 @@ export default function ContactPage() {
                     </Label>
                     <Textarea
                       id="message"
-                      placeholder="Please provide details about your inquiry..."
+                      placeholder="Your message here..."
                       {...register("message")}
-                      className="min-h-32 border-brand-light-gray/30 focus:border-brand-primary resize-none"
-                      disabled={isSubmitting}
+                      className="min-h-[150px] border-brand-light-gray/30 focus:border-brand-primary"
                     />
                     {errors.message && (
-                      <p className="text-sm text-red-500 mt-1">{errors.message.message}</p>
+                      <p className="text-red-500 text-sm">{errors.message.message}</p>
                     )}
                   </div>
                   <LoadingButton
                     type="submit"
-                    className="w-full bg-brand-primary hover:bg-brand-primary-hover text-brand-white h-12 text-lg font-semibold transition-all duration-200"
-                    isLoading={isSubmitting}
-                    loadingText="Sending..."
+                    loading={isSubmitting ? "true" : undefined}
+                    className="w-full bg-brand-primary hover:bg-brand-primary/90 text-white"
                   >
-                    <Send className="w-5 h-5 mr-2" />
+                    <Send className="w-4 h-4 mr-2" />
                     Send Message
                   </LoadingButton>
                 </form>
@@ -268,13 +282,35 @@ export default function ContactPage() {
         </div>
 
         {/* FAQ Section */}
-        <div className="mt-16 scroll-reveal">
+        <div 
+          ref={faqRef}
+          className={`mt-16 transition-all duration-700 ease-out ${
+            faqInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+          }`}
+        >
           <Card className="border-brand-light-gray/20">
-            <CardContent className="p-8 text-center">
-              <h2 className="text-2xl font-bold text-brand-dark mb-4">Frequently Asked Questions</h2>
-              <p className="text-brand-light-gray mb-6">
-                Before reaching out, you might find the answer to your question in our FAQ section.
-              </p>
+            <CardContent className="p-8">
+              <h2 className="text-2xl font-bold text-brand-dark mb-6">Frequently Asked Questions</h2>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-semibold text-brand-dark mb-2">How quickly can I expect a response?</h3>
+                  <p className="text-brand-light-gray">
+                    We typically respond to all inquiries within 24-48 business hours. For urgent matters, please call us directly.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-brand-dark mb-2">Do you offer emergency services?</h3>
+                  <p className="text-brand-light-gray">
+                    No, we do not provide emergency medical services. In case of a medical emergency, please call emergency services or visit your nearest hospital.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-brand-dark mb-2">Can I schedule an appointment through this form?</h3>
+                  <p className="text-brand-light-gray">
+                    While you can request an appointment through this form, we recommend using our online booking system for immediate scheduling.
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

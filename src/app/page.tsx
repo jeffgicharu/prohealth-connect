@@ -1,14 +1,67 @@
 "use client"
 
-import { useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
+import { useInView } from "react-intersection-observer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Brain, Calendar, Shield, Search, CreditCard, Users } from "lucide-react"
 
 export default function HomePage() {
   const router = useRouter()
-  const observerRef = useRef<IntersectionObserver | null>(null)
+
+  // Intersection Observer hooks for scroll reveal
+  const { ref: featuresHeadingRef, inView: featuresHeadingInView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  })
+
+  const { ref: featureCard1Ref, inView: featureCard1InView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 100,
+  })
+
+  const { ref: featureCard2Ref, inView: featureCard2InView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 200,
+  })
+
+  const { ref: featureCard3Ref, inView: featureCard3InView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 300,
+  })
+
+  // How It Works section hooks
+  const { ref: howItWorksTitleRef, inView: howItWorksTitleInView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  })
+
+  const { ref: step1Ref, inView: step1InView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 100,
+  })
+
+  const { ref: step2Ref, inView: step2InView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 200,
+  })
+
+  const { ref: step3Ref, inView: step3InView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 300,
+  })
+
+  // Final CTA section hook
+  const { ref: finalCtaRef, inView: finalCtaInView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  })
 
   const handleExploreServices = () => {
     router.push("/services")
@@ -21,24 +74,6 @@ export default function HomePage() {
   const handleGetStarted = () => {
     router.push("/signup")
   }
-
-  useEffect(() => {
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("revealed")
-          }
-        })
-      },
-      { threshold: 0.1 },
-    )
-
-    const elements = document.querySelectorAll(".scroll-reveal")
-    elements.forEach((el) => observerRef.current?.observe(el))
-
-    return () => observerRef.current?.disconnect()
-  }, [])
 
   return (
     <div className="w-full">
@@ -77,7 +112,12 @@ export default function HomePage() {
       {/* Features/Services Overview Section */}
       <section className="py-20 px-6 lg:px-8 bg-brand-white" aria-labelledby="features-heading">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16 scroll-reveal">
+          <div 
+            ref={featuresHeadingRef}
+            className={`text-center mb-16 transition-all duration-700 ease-out ${
+              featuresHeadingInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+            }`}
+          >
             <h2 id="features-heading" className="text-3xl md:text-4xl lg:text-5xl font-bold text-brand-dark mb-6">
               Discover How ProHealth Connect <span className="text-brand-primary">Empowers You</span>
             </h2>
@@ -88,7 +128,12 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" role="region" aria-label="Key features">
             {/* Card 1: AI-Powered Insights */}
-            <Card className="scroll-reveal hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2 border-brand-light-gray/20">
+            <Card 
+              ref={featureCard1Ref}
+              className={`shadow-md hover:shadow-lg focus-within:shadow-lg hover:scale-105 hover:-translate-y-1 focus-within:scale-105 focus-within:-translate-y-1 transition-all duration-300 ease-in-out border-brand-light-gray/20 rounded-lg focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-2 transition-all duration-700 ease-out ${
+                featureCard1InView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+              }`}
+            >
               <CardContent className="p-8 text-center">
                 <div className="w-16 h-16 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-6" aria-hidden="true">
                   <Brain className="w-8 h-8 text-brand-primary" />
@@ -102,7 +147,12 @@ export default function HomePage() {
             </Card>
 
             {/* Card 2: Easy Service Booking */}
-            <Card className="scroll-reveal hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2 border-brand-light-gray/20">
+            <Card 
+              ref={featureCard2Ref}
+              className={`shadow-md hover:shadow-lg focus-within:shadow-lg hover:scale-105 hover:-translate-y-1 focus-within:scale-105 focus-within:-translate-y-1 transition-all duration-300 ease-in-out border-brand-light-gray/20 rounded-lg focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-2 transition-all duration-700 ease-out ${
+                featureCard2InView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+              }`}
+            >
               <CardContent className="p-8 text-center">
                 <div className="w-16 h-16 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-6" aria-hidden="true">
                   <Calendar className="w-8 h-8 text-brand-primary" />
@@ -115,7 +165,12 @@ export default function HomePage() {
             </Card>
 
             {/* Card 3: Secure & Diverse Payments */}
-            <Card className="scroll-reveal hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2 border-brand-light-gray/20">
+            <Card 
+              ref={featureCard3Ref}
+              className={`shadow-md hover:shadow-lg focus-within:shadow-lg hover:scale-105 hover:-translate-y-1 focus-within:scale-105 focus-within:-translate-y-1 transition-all duration-300 ease-in-out border-brand-light-gray/20 rounded-lg focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-2 transition-all duration-700 ease-out ${
+                featureCard3InView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+              }`}
+            >
               <CardContent className="p-8 text-center">
                 <div className="w-16 h-16 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-6" aria-hidden="true">
                   <Shield className="w-8 h-8 text-brand-primary" />
@@ -133,7 +188,12 @@ export default function HomePage() {
       {/* How It Works Section */}
       <section className="py-20 px-6 lg:px-8 bg-gray-50/50">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16 scroll-reveal">
+          <div 
+            ref={howItWorksTitleRef}
+            className={`text-center mb-16 transition-all duration-700 ease-out ${
+              howItWorksTitleInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+            }`}
+          >
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-brand-dark mb-6">
               How It <span className="text-brand-primary">Works</span>
             </h2>
@@ -144,7 +204,12 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
             {/* Step 1 */}
-            <div className="text-center scroll-reveal">
+            <div 
+              ref={step1Ref}
+              className={`text-center transition-all duration-700 ease-out ${
+                step1InView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+              }`}
+            >
               <div className="relative">
                 <div className="w-20 h-20 bg-brand-primary rounded-full flex items-center justify-center mx-auto mb-6">
                   <Search className="w-10 h-10 text-brand-white" />
@@ -160,7 +225,12 @@ export default function HomePage() {
             </div>
 
             {/* Step 2 */}
-            <div className="text-center scroll-reveal">
+            <div 
+              ref={step2Ref}
+              className={`text-center transition-all duration-700 ease-out ${
+                step2InView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+              }`}
+            >
               <div className="relative">
                 <div className="w-20 h-20 bg-brand-primary rounded-full flex items-center justify-center mx-auto mb-6">
                   <CreditCard className="w-10 h-10 text-brand-white" />
@@ -176,7 +246,12 @@ export default function HomePage() {
             </div>
 
             {/* Step 3 */}
-            <div className="text-center scroll-reveal">
+            <div 
+              ref={step3Ref}
+              className={`text-center transition-all duration-700 ease-out ${
+                step3InView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+              }`}
+            >
               <div className="relative">
                 <div className="w-20 h-20 bg-brand-primary rounded-full flex items-center justify-center mx-auto mb-6">
                   <Users className="w-10 h-10 text-brand-white" />
@@ -196,7 +271,12 @@ export default function HomePage() {
 
       {/* Final Call-to-Action Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-brand-primary/5 to-brand-primary/10">
-        <div className="max-w-md sm:max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto text-center scroll-reveal">
+        <div 
+          ref={finalCtaRef}
+          className={`max-w-md sm:max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto text-center transition-all duration-700 ease-out ${
+            finalCtaInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+          }`}
+        >
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-brand-dark mb-6">
             Ready to Take Control of Your <span className="text-brand-primary">Wellness Journey?</span>
           </h2>

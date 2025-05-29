@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { getAllServices } from "../actions/serviceActions";
-import ServiceCard from '@/components/cards/ServiceCard';
+import { AnimatedServiceCardWrapper } from '@/components/cards/AnimatedServiceCardWrapper';
 import { Service } from "@prisma/client";
 import ServicesLoading from '@/components/loading/ServicesLoading';
 
@@ -17,8 +17,8 @@ async function ServicesList() {
 
   return (
     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8'>
-      {services.map((service) => (
-        <ServiceCard key={service.id} service={service} />
+      {services.map((service, index) => (
+        <AnimatedServiceCardWrapper key={service.id} service={service} index={index} />
       ))}
     </div>
   );

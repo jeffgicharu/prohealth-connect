@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Menu, X } from "lucide-react"
+import { Menu, X, User, LogOut, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import {
@@ -19,7 +19,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { User, LogOut } from "lucide-react"
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -54,6 +53,10 @@ export default function Navbar() {
     console.log("Session data:", session)
   }, [status, session])
 
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen)
+  }
+
   return (
     <nav className="sticky top-0 z-50 w-full bg-brand-white border-b border-brand-light-gray/30 shadow-sm">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -83,7 +86,7 @@ export default function Navbar() {
           {/* Desktop Auth Buttons */}
           <div className="hidden lg:flex items-center space-x-4">
             {status === "loading" && (
-              <p className="text-brand-dark">Loading...</p>
+              <Loader2 className="h-5 w-5 text-brand-primary animate-spin" />
             )}
             
             {status === "unauthenticated" && (
@@ -143,12 +146,19 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            className="lg:hidden p-2 text-brand-dark hover:text-brand-primary transition-colors duration-200"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="flex items-center lg:hidden">
+            <button
+              onClick={toggleMenu}
+              className="inline-flex items-center justify-center p-2 rounded-md text-brand-dark hover:text-brand-primary hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-primary"
+            >
+              <span className="sr-only">Open main menu</span>
+              {isMenuOpen ? (
+                <X className="block h-6 w-6" aria-hidden="true" />
+              ) : (
+                <Menu className="block h-6 w-6" aria-hidden="true" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}
@@ -167,7 +177,9 @@ export default function Navbar() {
               ))}
               <div className="flex flex-col space-y-3 pt-4 border-t border-brand-light-gray/30">
                 {status === "loading" && (
-                  <p className="text-brand-dark">Loading...</p>
+                  <div className="flex justify-center py-2">
+                    <Loader2 className="h-5 w-5 text-brand-primary animate-spin" />
+                  </div>
                 )}
                 
                 {status === "unauthenticated" && (

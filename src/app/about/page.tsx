@@ -1,29 +1,38 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useInView } from "react-intersection-observer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Heart, Target, Users, Shield, Award, Globe } from "lucide-react"
 
 export default function AboutPage() {
-  const observerRef = useRef<IntersectionObserver | null>(null)
+  // Intersection Observer hooks for scroll reveal
+  const { ref: headerRef, inView: headerInView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  })
 
-  useEffect(() => {
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("revealed")
-          }
-        })
-      },
-      { threshold: 0.1 },
-    )
+  const { ref: missionRef, inView: missionInView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  })
 
-    const elements = document.querySelectorAll(".scroll-reveal")
-    elements.forEach((el) => observerRef.current?.observe(el))
+  const { ref: visionRef, inView: visionInView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 100,
+  })
 
-    return () => observerRef.current?.disconnect()
-  }, [])
+  const { ref: valuesRef, inView: valuesInView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 200,
+  })
+
+  const { ref: teamRef, inView: teamInView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 300,
+  })
 
   const values = [
     {
@@ -68,7 +77,12 @@ export default function AboutPage() {
     <div className="min-h-screen bg-brand-white py-12 px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         {/* Page Header */}
-        <div className="text-center mb-16 scroll-reveal">
+        <div 
+          ref={headerRef}
+          className={`text-center mb-16 transition-all duration-700 ease-out ${
+            headerInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+          }`}
+        >
           <h1 className="text-4xl md:text-5xl font-bold text-brand-dark mb-6">
             About <span className="text-brand-primary">ProHealth Connect</span>
           </h1>
@@ -79,7 +93,12 @@ export default function AboutPage() {
         </div>
 
         {/* Mission Section */}
-        <section className="mb-16 scroll-reveal">
+        <section 
+          ref={missionRef}
+          className={`mb-16 transition-all duration-700 ease-out ${
+            missionInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+          }`}
+        >
           <Card className="border-brand-light-gray/20">
             <CardContent className="p-8 md:p-12">
               <div className="text-center mb-8">
@@ -100,7 +119,12 @@ export default function AboutPage() {
         </section>
 
         {/* Vision Section */}
-        <section className="mb-16 scroll-reveal">
+        <section 
+          ref={visionRef}
+          className={`mb-16 transition-all duration-700 ease-out ${
+            visionInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+          }`}
+        >
           <Card className="border-brand-light-gray/20">
             <CardContent className="p-8 md:p-12">
               <div className="text-center mb-8">
@@ -121,7 +145,12 @@ export default function AboutPage() {
         </section>
 
         {/* Values Section */}
-        <section className="mb-16 scroll-reveal">
+        <section 
+          ref={valuesRef}
+          className={`mb-16 transition-all duration-700 ease-out ${
+            valuesInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+          }`}
+        >
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-brand-dark mb-4">Our Core Values</h2>
             <p className="text-lg text-brand-light-gray max-w-3xl mx-auto">
@@ -148,7 +177,12 @@ export default function AboutPage() {
         </section>
 
         {/* Team Section */}
-        <section className="scroll-reveal">
+        <section 
+          ref={teamRef}
+          className={`transition-all duration-700 ease-out ${
+            teamInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+          }`}
+        >
           <Card className="border-brand-light-gray/20 bg-gradient-to-r from-brand-primary/5 to-brand-primary/10">
             <CardContent className="p-8 md:p-12 text-center">
               <h2 className="text-3xl font-bold text-brand-dark mb-6">Built with Purpose</h2>

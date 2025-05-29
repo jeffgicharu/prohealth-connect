@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState } from "react"
+import { useInView } from "react-intersection-observer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -14,25 +15,54 @@ export default function AIAssistantPage() {
   const [symptoms, setSymptoms] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [insight, setInsight] = useState("")
-  const observerRef = useRef<IntersectionObserver | null>(null)
 
-  useEffect(() => {
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("revealed")
-          }
-        })
-      },
-      { threshold: 0.1 },
-    )
+  // Intersection Observer hooks for scroll reveal
+  const { ref: headerRef, inView: headerInView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  })
 
-    const elements = document.querySelectorAll(".scroll-reveal")
-    elements.forEach((el) => observerRef.current?.observe(el))
+  const { ref: disclaimerRef, inView: disclaimerInView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 100,
+  })
 
-    return () => observerRef.current?.disconnect()
-  }, [])
+  const { ref: inputCardRef, inView: inputCardInView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 200,
+  })
+
+  const { ref: resultsCardRef, inView: resultsCardInView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 300,
+  })
+
+  const { ref: additionalFeaturesTitleRef, inView: additionalFeaturesTitleInView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 400,
+  })
+
+  const { ref: feature1Ref, inView: feature1InView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 500,
+  })
+
+  const { ref: feature2Ref, inView: feature2InView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 600,
+  })
+
+  const { ref: feature3Ref, inView: feature3InView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+    delay: 700,
+  })
 
   const handleGetInsights = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -76,7 +106,12 @@ export default function AIAssistantPage() {
     <div className="min-h-screen bg-brand-white py-12 px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         {/* Page Header */}
-        <div className="text-center mb-12 scroll-reveal">
+        <div 
+          ref={headerRef}
+          className={`text-center mb-12 transition-all duration-700 ease-out ${
+            headerInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+          }`}
+        >
           <div className="w-20 h-20 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <Brain className="w-10 h-10 text-brand-primary" />
           </div>
@@ -90,7 +125,12 @@ export default function AIAssistantPage() {
         </div>
 
         {/* Primary Disclaimer Alert */}
-        <Alert className="mb-8 scroll-reveal border-yellow-200 bg-yellow-50">
+        <Alert 
+          ref={disclaimerRef}
+          className={`mb-8 border-yellow-200 bg-yellow-50 transition-all duration-700 ease-out ${
+            disclaimerInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+          }`}
+        >
           <AlertTriangle className="h-5 w-5 text-yellow-600" />
           <AlertDescription className="text-yellow-800 font-medium">
             <strong>Important Disclaimer:</strong> This AI Assistant provides general information only and is not a
@@ -102,7 +142,12 @@ export default function AIAssistantPage() {
         {/* Main Interaction Area */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Input Section */}
-          <Card className="scroll-reveal">
+          <Card 
+            ref={inputCardRef}
+            className={`shadow-md hover:shadow-lg focus-within:shadow-lg hover:scale-105 hover:-translate-y-1 focus-within:scale-105 focus-within:-translate-y-1 transition-all duration-300 ease-in-out border border-brand-light-gray/20 rounded-lg focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-2 transition-all duration-700 ease-out ${
+              inputCardInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+            }`}
+          >
             <CardHeader>
               <CardTitle className="text-2xl font-bold text-brand-dark flex items-center gap-2">
                 <Sparkles className="w-6 h-6 text-brand-primary" />
@@ -128,7 +173,7 @@ export default function AIAssistantPage() {
                   type="submit"
                   disabled={!symptoms.trim()}
                   className="w-full bg-brand-primary hover:bg-brand-primary-hover text-brand-white py-3 text-lg font-semibold transition-all duration-200"
-                  isLoading={isLoading}
+                  loading={isLoading ? "true" : undefined}
                   loadingText="Getting Insights..."
                 >
                   <div className="flex items-center justify-center">
@@ -140,7 +185,12 @@ export default function AIAssistantPage() {
           </Card>
 
           {/* Results Section */}
-          <Card className="scroll-reveal">
+          <Card 
+            ref={resultsCardRef}
+            className={`shadow-md hover:shadow-lg focus-within:shadow-lg hover:scale-105 hover:-translate-y-1 focus-within:scale-105 focus-within:-translate-y-1 transition-all duration-300 ease-in-out border border-brand-light-gray/20 rounded-lg focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-2 transition-all duration-700 ease-out ${
+              resultsCardInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+            }`}
+          >
             <CardHeader>
               <CardTitle className="text-2xl font-bold text-brand-dark">AI Insights</CardTitle>
             </CardHeader>
@@ -199,35 +249,63 @@ export default function AIAssistantPage() {
           </Card>
         </div>
 
-        {/* Additional Features */}
-        <div className="mt-12 scroll-reveal">
-          <h2 className="text-2xl font-bold text-brand-dark mb-6 text-center">Additional AI Features</h2>
+        {/* Additional AI Features */}
+        <div 
+          ref={additionalFeaturesTitleRef}
+          className={`mt-12 transition-all duration-700 ease-out ${
+            additionalFeaturesTitleInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+          }`}
+        >
+          <h2 className="text-2xl font-bold text-brand-dark mb-8 text-center">Additional AI Features</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="text-center hover:shadow-md transition-all duration-200">
+            <Card 
+              ref={feature1Ref}
+              className={`text-center hover:shadow-md transition-all duration-200 transition-all duration-700 ease-out ${
+                feature1InView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+              }`}
+            >
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Brain className="w-6 h-6 text-brand-primary" />
                 </div>
-                <h3 className="font-semibold text-brand-dark mb-2">Health Education</h3>
-                <p className="text-brand-light-gray text-sm">Learn about various health topics and conditions</p>
+                <h3 className="font-semibold text-brand-dark mb-2">Symptom Analysis</h3>
+                <p className="text-brand-light-gray">
+                  Get detailed analysis of your symptoms and potential causes.
+                </p>
               </CardContent>
             </Card>
-            <Card className="text-center hover:shadow-md transition-all duration-200">
+
+            <Card 
+              ref={feature2Ref}
+              className={`text-center hover:shadow-md transition-all duration-200 transition-all duration-700 ease-out ${
+                feature2InView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+              }`}
+            >
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Info className="w-6 h-6 text-brand-primary" />
+                </div>
+                <h3 className="font-semibold text-brand-dark mb-2">Health Education</h3>
+                <p className="text-brand-light-gray">
+                  Learn about various health conditions and preventive measures.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card 
+              ref={feature3Ref}
+              className={`text-center hover:shadow-md transition-all duration-200 transition-all duration-700 ease-out ${
+                feature3InView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
+              }`}
+            >
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Sparkles className="w-6 h-6 text-brand-primary" />
                 </div>
-                <h3 className="font-semibold text-brand-dark mb-2">Wellness Tips</h3>
-                <p className="text-brand-light-gray text-sm">Get personalized wellness and lifestyle recommendations</p>
-              </CardContent>
-            </Card>
-            <Card className="text-center hover:shadow-md transition-all duration-200">
-              <CardContent className="p-6">
-                <div className="w-12 h-12 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <AlertTriangle className="w-6 h-6 text-brand-primary" />
-                </div>
-                <h3 className="font-semibold text-brand-dark mb-2">Risk Assessment</h3>
-                <p className="text-brand-light-gray text-sm">Understand potential health risks and prevention</p>
+                <h3 className="font-semibold text-brand-dark mb-2">Smart Suggestions</h3>
+                <p className="text-brand-light-gray">
+                  Receive personalized recommendations for your health concerns.
+                </p>
               </CardContent>
             </Card>
           </div>

@@ -86,7 +86,7 @@ function BookingCard({ booking }: BookingCardProps) {
   };
 
   return (
-    <Card className="mb-4 shadow-md">
+    <Card className="mb-4 shadow-md hover:shadow-lg focus-within:shadow-lg hover:scale-105 hover:-translate-y-1 focus-within:scale-105 focus-within:-translate-y-1 transition-all duration-300 ease-in-out focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-2 border border-brand-light-gray/20 rounded-lg">
       <CardHeader>
         <CardTitle className="text-brand-dark">
           {booking.service?.name || 'Service name unavailable'}
