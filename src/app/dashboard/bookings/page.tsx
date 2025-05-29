@@ -9,6 +9,8 @@ import { format } from "date-fns";
 import { getUserBookings } from "@/app/actions/bookingActions";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { useState, useEffect } from "react";
+import { CenteredSpinnerMessage } from '@/components/loading/CenteredSpinnerMessage';
+import { CheckCircle2, Hourglass, AlertCircle, XCircle, Info } from 'lucide-react';
 
 interface Service {
   id: string;
@@ -47,13 +49,13 @@ function BookingCard({ booking }: BookingCardProps) {
     switch (status.toUpperCase()) {
       case "CONFIRMED":
       case "PAID":
-        return "default";
+        return "default"; // Using default (dark) for confirmed/paid statuses
       case "PENDING":
       case "UNPAID":
-        return "secondary";
+        return "secondary"; // Using secondary (light gray) for pending/unpaid statuses
       case "CANCELLED":
       case "FAILED":
-        return "destructive";
+        return "destructive"; // Using destructive (red) for cancelled/failed statuses
       default:
         return "outline";
     }
@@ -97,19 +99,27 @@ function BookingCard({ booking }: BookingCardProps) {
       </CardHeader>
       <CardContent className="space-y-2">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600">Booking Status:</span>
-          <Badge variant={getStatusVariant(booking.status)}>
+          <span className="text-sm text-brand-light-gray">Booking Status:</span>
+          <Badge variant={getStatusVariant(booking.status)} className="font-medium flex items-center">
+            {booking.status?.toUpperCase() === "CONFIRMED" && <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />}
+            {booking.status?.toUpperCase() === "PENDING" && <Hourglass className="h-3.5 w-3.5 mr-1.5" />}
+            {booking.status?.toUpperCase() === "CANCELLED" && <XCircle className="h-3.5 w-3.5 mr-1.5" />}
+            {!(["CONFIRMED", "PENDING", "CANCELLED"].includes(booking.status?.toUpperCase() || "")) && booking.status && <Info className="h-3.5 w-3.5 mr-1.5" />}
             {booking.status || 'Unknown'}
           </Badge>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600">Payment Status:</span>
-          <Badge variant={getStatusVariant(booking.paymentStatus)}>
+          <span className="text-sm text-brand-light-gray">Payment Status:</span>
+          <Badge variant={getStatusVariant(booking.paymentStatus)} className="font-medium flex items-center">
+            {booking.paymentStatus?.toUpperCase() === "PAID" && <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />}
+            {booking.paymentStatus?.toUpperCase() === "UNPAID" && <AlertCircle className="h-3.5 w-3.5 mr-1.5" />}
+            {booking.paymentStatus?.toUpperCase() === "FAILED" && <XCircle className="h-3.5 w-3.5 mr-1.5" />}
+            {!(["PAID", "UNPAID", "FAILED"].includes(booking.paymentStatus?.toUpperCase() || "")) && booking.paymentStatus && <Info className="h-3.5 w-3.5 mr-1.5" />}
             {booking.paymentStatus || 'Unknown'}
           </Badge>
         </div>
         {booking.service?.price && (
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-brand-light-gray">
             Price: Ksh {Number(booking.service.price).toFixed(2)}
           </p>
         )}
@@ -162,7 +172,7 @@ function BookingsList() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-10 bg-white shadow-md rounded-lg">
-          <p className="text-xl text-brand-light-gray mb-4">Loading your bookings...</p>
+          <CenteredSpinnerMessage message="Loading your bookings..." textSize="text-xl" />
         </div>
       </div>
     );

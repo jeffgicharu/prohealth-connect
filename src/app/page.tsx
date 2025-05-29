@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation"
 import { useInView } from "react-intersection-observer"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Brain, Calendar, Shield, Search, CreditCard, Users } from "lucide-react"
+import { BrainCircuit, CalendarCheck, ShieldCheck, Search, CreditCard, Users } from "lucide-react"
 
 export default function HomePage() {
   const router = useRouter()
@@ -78,20 +79,29 @@ export default function HomePage() {
   return (
     <div className="w-full">
       {/* Hero Section */}
-      <section className="min-h-[80vh] flex items-center justify-center bg-gradient-to-br from-brand-white to-gray-50/50 px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
+      <section className="relative min-h-[80vh] flex items-center justify-center px-6 lg:px-8">
+        <Image
+          src="/images/hero/people-centric-hero.png"
+          alt="Diverse group of people interacting positively"
+          fill
+          className="object-cover -z-10"
+          priority
+          quality={75}
+        />
+        <div className="absolute inset-0 bg-brand-dark/60"></div>
+        <div className="relative max-w-7xl mx-auto text-center">
           <div className="animate-fade-in">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-brand-dark mb-6 leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-brand-white mb-6 leading-tight drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">
               Modern Health, <span className="text-brand-primary">Simplified</span> &{" "}
               <span className="text-brand-primary">Accessible</span>
             </h1>
-            <p className="text-lg md:text-xl lg:text-2xl text-brand-light-gray mb-8 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl lg:text-2xl text-brand-white/90 mb-8 max-w-4xl mx-auto leading-relaxed drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]">
               Your trusted partner for AI-powered health insights and seamless wellness service bookings.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button
                 size="lg"
-                className="bg-brand-primary hover:bg-brand-primary-hover text-brand-white px-8 py-4 text-lg font-semibold transition-all duration-200 transform hover:scale-105"
+                className="bg-brand-primary hover:bg-brand-primary-hover text-brand-white px-8 py-4 text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
                 onClick={handleExploreServices}
               >
                 Explore Our Services
@@ -99,7 +109,7 @@ export default function HomePage() {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-brand-primary text-brand-primary hover:bg-brand-primary/10 px-8 py-4 text-lg font-semibold transition-all duration-200 transform hover:scale-105"
+                className="border-brand-white text-brand-white hover:bg-brand-white/10 px-8 py-4 text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
                 onClick={handleTryAIAssistant}
               >
                 Try AI Assistant
@@ -110,7 +120,7 @@ export default function HomePage() {
       </section>
 
       {/* Features/Services Overview Section */}
-      <section className="py-20 px-6 lg:px-8 bg-brand-white" aria-labelledby="features-heading">
+      <section className="relative py-20 px-6 lg:px-8 bg-brand-white" aria-labelledby="features-heading">
         <div className="max-w-7xl mx-auto">
           <div 
             ref={featuresHeadingRef}
@@ -136,7 +146,7 @@ export default function HomePage() {
             >
               <CardContent className="p-8 text-center">
                 <div className="w-16 h-16 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-6" aria-hidden="true">
-                  <Brain className="w-8 h-8 text-brand-primary" />
+                  <BrainCircuit className="w-8 h-8 text-brand-primary" />
                 </div>
                 <h3 className="text-xl font-bold text-brand-dark mb-4">AI-Powered Insights</h3>
                 <p className="text-brand-light-gray leading-relaxed">
@@ -155,7 +165,7 @@ export default function HomePage() {
             >
               <CardContent className="p-8 text-center">
                 <div className="w-16 h-16 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-6" aria-hidden="true">
-                  <Calendar className="w-8 h-8 text-brand-primary" />
+                  <CalendarCheck className="w-8 h-8 text-brand-primary" />
                 </div>
                 <h3 className="text-xl font-bold text-brand-dark mb-4">Easy Service Booking</h3>
                 <p className="text-brand-light-gray leading-relaxed">
@@ -173,7 +183,7 @@ export default function HomePage() {
             >
               <CardContent className="p-8 text-center">
                 <div className="w-16 h-16 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-6" aria-hidden="true">
-                  <Shield className="w-8 h-8 text-brand-primary" />
+                  <ShieldCheck className="w-8 h-8 text-brand-primary" />
                 </div>
                 <h3 className="text-xl font-bold text-brand-dark mb-4">Secure & Diverse Payments</h3>
                 <p className="text-brand-light-gray leading-relaxed">

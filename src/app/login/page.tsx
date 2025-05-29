@@ -11,6 +11,7 @@ import toast from 'react-hot-toast'
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import { Mail, Lock } from "lucide-react";
 
 // Define the login form schema
 const loginFormSchema = z.object({
@@ -78,7 +79,10 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="flex items-center">
+                <Mail className="mr-2 h-4 w-4 text-brand-light-gray" />
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -91,7 +95,10 @@ export default function LoginPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="flex items-center">
+                <Lock className="mr-2 h-4 w-4 text-brand-light-gray" />
+                Password
+              </Label>
               <Input
                 id="password"
                 type="password"

@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useState } from "react"
+import { User, Mail, Phone, Lock } from "lucide-react"
 
 // Define the signup form schema
 const signupFormSchema = z.object({
@@ -116,7 +117,10 @@ export default function SignupPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName">First name</Label>
+                <Label htmlFor="firstName" className="flex items-center">
+                  <User className="mr-2 h-4 w-4 text-brand-light-gray" />
+                  First name
+                </Label>
                 <Input
                   id="firstName"
                   {...register("firstName")}
@@ -127,7 +131,10 @@ export default function SignupPage() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName">Last name</Label>
+                <Label htmlFor="lastName" className="flex items-center">
+                  <User className="mr-2 h-4 w-4 text-brand-light-gray" />
+                  Last name
+                </Label>
                 <Input
                   id="lastName"
                   {...register("lastName")}
@@ -139,7 +146,10 @@ export default function SignupPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="flex items-center">
+                <Mail className="mr-2 h-4 w-4 text-brand-light-gray" />
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -152,7 +162,10 @@ export default function SignupPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone number</Label>
+              <Label htmlFor="phone" className="flex items-center">
+                <Phone className="mr-2 h-4 w-4 text-brand-light-gray" />
+                Phone number
+              </Label>
               <Input
                 id="phone"
                 type="tel"
@@ -165,7 +178,10 @@ export default function SignupPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="flex items-center">
+                <Lock className="mr-2 h-4 w-4 text-brand-light-gray" />
+                Password
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -177,7 +193,10 @@ export default function SignupPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm password</Label>
+              <Label htmlFor="confirmPassword" className="flex items-center">
+                <Lock className="mr-2 h-4 w-4 text-brand-light-gray" />
+                Confirm password
+              </Label>
               <Input
                 id="confirmPassword"
                 type="password"

@@ -8,12 +8,14 @@ import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CreditCard, Smartphone } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { LoadingButton } from "@/components/ui/loading-button"
 import { handleApiError } from '@/lib/utils/errorHandling';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { CenteredSpinnerMessage } from '@/components/loading/CenteredSpinnerMessage';
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
 // recreating the `Stripe` object on every render.
@@ -246,59 +248,43 @@ export default function PaymentPage() {
   }, [status, bookingId, router]);
 
   if (status === 'loading' || loading) {
-    return (
-      <div className="container mx-auto px-4 py-8 max-w-md">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-8">Loading Payment Gateway...</div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!clientSecret || !bookingAmount) {
-    return (
-      <div className="container mx-auto px-4 py-8 max-w-md">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-8">Could not load payment form. Please try again.</div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <CenteredSpinnerMessage message="Loading payment details..." />;
   }
 
   const options: StripeElementsOptions = {
-    clientSecret,
-    appearance: { theme: 'stripe' },
+    clientSecret: clientSecret || undefined,
+    appearance: {
+      theme: 'stripe',
+    },
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-md">
+    <div className="container max-w-2xl mx-auto py-8 px-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Complete Your Payment</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Payment Details</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="card" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="card">Card Payment</TabsTrigger>
-              <TabsTrigger value="mpesa">M-Pesa</TabsTrigger>
+              <TabsTrigger value="card" className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                Card Payment
+              </TabsTrigger>
+              <TabsTrigger value="mpesa" className="flex items-center gap-2">
+                <Smartphone className="h-4 w-4" />
+                M-Pesa
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="card">
-              <Elements options={options} stripe={stripePromise}>
-                <CheckoutForm 
-                  bookingId={bookingId} 
-                  bookingAmount={bookingAmount} 
-                />
-              </Elements>
+              {clientSecret && (
+                <Elements stripe={stripePromise} options={options}>
+                  <CheckoutForm bookingId={bookingId} bookingAmount={bookingAmount} />
+                </Elements>
+              )}
             </TabsContent>
             <TabsContent value="mpesa">
-              <MpesaPaymentForm 
-                bookingId={bookingId} 
-                bookingAmount={bookingAmount} 
-              />
+              <MpesaPaymentForm bookingId={bookingId} bookingAmount={bookingAmount} />
             </TabsContent>
           </Tabs>
         </CardContent>

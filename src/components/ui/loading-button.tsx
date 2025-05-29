@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button"
+import { Button, ButtonProps } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
-import { ButtonProps } from "@/components/ui/button"
+import React from "react"
 
 interface LoadingButtonProps extends ButtonProps {
   isLoading?: boolean
@@ -9,7 +9,7 @@ interface LoadingButtonProps extends ButtonProps {
 
 export function LoadingButton({
   children,
-  isLoading,
+  isLoading = false,
   loadingText,
   disabled,
   ...props
@@ -17,10 +17,10 @@ export function LoadingButton({
   return (
     <Button disabled={isLoading || disabled} {...props}>
       {isLoading ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          {loadingText || children}
-        </>
+        <div className="flex items-center justify-center">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin text-current" />
+          <span className="text-current">{loadingText || children}</span>
+        </div>
       ) : (
         children
       )}

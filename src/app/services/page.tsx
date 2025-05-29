@@ -3,6 +3,9 @@ import { getAllServices } from "../actions/serviceActions";
 import { AnimatedServiceCardWrapper } from '@/components/cards/AnimatedServiceCardWrapper';
 import { Service } from "@prisma/client";
 import ServicesLoading from '@/components/loading/ServicesLoading';
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 
 async function ServicesList() {
   const services: Service[] = await getAllServices();
@@ -30,6 +33,45 @@ export default function ServicesPage() {
       <h1 className='text-3xl md:text-4xl font-bold text-brand-dark mb-8 text-center'>
         Explore Our Wellness Services
       </h1>
+      
+      <div className="mb-8 p-4 border border-brand-light-gray/20 rounded-lg shadow-sm bg-white">
+        <div className="flex flex-col md:flex-row gap-4 items-center">
+          {/* Mock Search Input */}
+          <div className="flex-grow w-full md:w-auto">
+            <Input
+              type="text"
+              placeholder="Search services (e.g., 'nutrition', 'yoga')..."
+              className="w-full border-brand-light-gray/30 focus:border-brand-primary"
+              disabled // Non-functional for now
+            />
+          </div>
+
+          {/* Mock Filter by Category Dropdown */}
+          <div className="w-full md:w-auto">
+            <Button
+              variant="outline"
+              className="w-full md:w-auto flex justify-between items-center text-brand-light-gray border-brand-light-gray/30 hover:border-brand-primary disabled:opacity-100"
+              disabled // Non-functional for now
+            >
+              Filter by Category
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Mock Sort By Dropdown */}
+          <div className="w-full md:w-auto">
+            <Button
+              variant="outline"
+              className="w-full md:w-auto flex justify-between items-center text-brand-light-gray border-brand-light-gray/30 hover:border-brand-primary disabled:opacity-100"
+              disabled // Non-functional for now
+            >
+              Sort By
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
       <Suspense fallback={<ServicesLoading />}>
         <ServicesList />
       </Suspense>

@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { LoadingButton } from '@/components/ui/loading-button';
 import toast from 'react-hot-toast';
 import { handleApiError } from '@/lib/utils/errorHandling';
+import { CenteredSpinnerMessage } from '@/components/loading/CenteredSpinnerMessage';
 
 // Helper function to fetch service details client-side if needed,
 // or pass service data via props if navigating from a server component.
@@ -22,7 +23,7 @@ export default function BookServicePage() {
   const { data: session, status: sessionStatus } = useSession();
 
   const [service, setService] = useState<Service | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (serviceId) {
@@ -76,7 +77,7 @@ export default function BookServicePage() {
   };
 
   if (sessionStatus === 'loading' || isLoading && !service) {
-    return <div className="text-center py-10">Loading booking details...</div>;
+    return <CenteredSpinnerMessage message="Loading booking details..." />;
   }
 
   if (!serviceId) {
@@ -100,13 +101,27 @@ export default function BookServicePage() {
     <div className='container mx-auto px-4 py-8 max-w-2xl'>
       <h1 className='text-3xl font-bold text-brand-dark mb-6 text-center'>Confirm Your Booking</h1>
       {service ? (
-        <div className='bg-white p-6 shadow-lg rounded-lg'>
+        <div className='bg-white p-6 shadow-md hover:shadow-lg focus-within:shadow-lg hover:scale-105 hover:-translate-y-1 focus-within:scale-105 focus-within:-translate-y-1 transition-all duration-300 ease-in-out border border-brand-light-gray/20 rounded-lg focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-2'>
           <h2 className='text-2xl font-semibold text-brand-primary mb-2'>{service.name}</h2>
-          <p className='text-gray-700 mb-4'>
+          
+          {/* Service Details Section */}
+          <div className="mb-4 text-sm text-brand-light-gray space-y-1 border-t border-b border-brand-light-gray/10 py-3">
+            {service.practitionerName && (
+              <p><strong>Practitioner:</strong> {service.practitionerName}</p>
+            )}
+            {service.duration && (
+              <p><strong>Duration:</strong> {service.duration} minutes</p>
+            )}
+            {service.description && (
+              <p><strong>Description:</strong> {service.description}</p>
+            )}
+          </div>
+
+          <p className='text-brand-light-gray mb-4'>
             You are about to book: <strong>{service.name}</strong>.
             {service.price && ` The price is Ksh ${service.price.toFixed(2)}.`}
           </p>
-          <p className='text-sm text-gray-600 mb-6'>
+          <p className='text-sm text-brand-light-gray mb-6'>
             Payment will be required to confirm this booking in the next step. For now, this will create a pending booking.
           </p>
           <LoadingButton

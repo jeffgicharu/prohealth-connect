@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
@@ -60,7 +60,7 @@ export default function PaymentStatusPage() {
         <CardContent className="space-y-6">
           <div className="flex flex-col items-center justify-center py-4">
             {status === 'loading' && (
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
+              <Loader2 className="h-12 w-12 text-brand-primary animate-spin mx-auto" />
             )}
             {status === 'success' && (
               <CheckCircle2 className="h-12 w-12 text-green-500" />

@@ -269,7 +269,7 @@ export default function ContactPage() {
                   </div>
                   <LoadingButton
                     type="submit"
-                    loading={isSubmitting ? "true" : undefined}
+                    isLoading={isSubmitting}
                     className="w-full bg-brand-primary hover:bg-brand-primary/90 text-white"
                   >
                     <Send className="w-4 h-4 mr-2" />

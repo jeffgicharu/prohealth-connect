@@ -1,9 +1,9 @@
 import { getServiceById } from '@/app/actions/serviceActions';
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Briefcase, Clock, UserCircle, DollarSign } from 'lucide-react';
+import { Briefcase, Clock, UserCircle } from 'lucide-react';
 import { BookingButton } from '@/components/buttons/BookingButton';
+import { ServiceImageClient } from '@/components/shared/ServiceImageClient';
 
 // Base64 encoded tiny placeholder image (1x1 pixel transparent)
 const blurDataURL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
@@ -23,14 +23,14 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
     <div className='container mx-auto px-4 py-8'>
       <div className='bg-white shadow-xl rounded-lg overflow-hidden'>
         <div className='relative w-full h-64 md:h-96 bg-gray-100'>
-          <Image
-            src={placeholderSrc}
+          <ServiceImageClient
+            src={service.imageUrl}
+            placeholderSrc={placeholderSrc}
             alt={service.name || 'Service Image'}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
             priority
-            placeholder="blur"
             blurDataURL={blurDataURL}
             quality={90}
           />
@@ -43,21 +43,32 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
               {service.category}
             </div>
           )}
-          <p className='text-gray-700 leading-relaxed mb-6 text-base whitespace-pre-line'>
+          <p className='text-brand-light-gray leading-relaxed mb-6 text-base whitespace-pre-line'>
             {service.description || 'Detailed description not available.'}
           </p>
 
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-8'>
-            <div className='bg-gray-50 p-4 rounded-lg'>
-              <h3 className='text-lg font-semibold text-brand-dark mb-2'>Service Details</h3>
-              <ul className='space-y-2 text-sm text-gray-600'>
+            <div className='bg-gray-50 p-6 rounded-lg shadow'>
+              <h3 className='text-xl font-semibold text-brand-dark mb-4'>Service Details</h3>
+              <div className="mb-6">
+                <p className="text-sm text-brand-dark font-medium">Price</p>
+                <p className='text-3xl font-bold text-brand-primary mt-1'>
+                  Ksh {service.price.toFixed(2)}
+                </p>
+              </div>
+              <ul className='space-y-3 text-sm text-brand-light-gray'>
                 {service.practitionerName && (
-                  <li className="flex items-center"><UserCircle size={16} className="mr-2 text-brand-primary" />Practitioner: {service.practitionerName}</li>
+                  <li className="flex items-center">
+                    <UserCircle size={16} className="mr-2 text-brand-primary" />
+                    <span>Practitioner: {service.practitionerName}</span>
+                  </li>
                 )}
                 {service.duration && (
-                  <li className="flex items-center"><Clock size={16} className="mr-2 text-brand-primary" />Duration: {service.duration} minutes</li>
+                  <li className="flex items-center">
+                    <Clock size={16} className="mr-2 text-brand-primary" />
+                    <span>Duration: {service.duration} minutes</span>
+                  </li>
                 )}
-                <li className="flex items-center"><DollarSign size={16} className="mr-2 text-brand-primary" />Price: Ksh {service.price.toFixed(2)}</li>
               </ul>
             </div>
             {/* You could add another info box here if needed */}

@@ -36,7 +36,7 @@ const ServiceCard = memo(function ServiceCard({ service }: ServiceCardProps) {
           placeholder="blur"
           blurDataURL={blurDataURL}
           onLoadingComplete={() => setIsLoading(false)}
-          onError={(e) => {
+          onError={() => {
             const imageElement = document.querySelector(`img[alt="${service.name || 'Service Image'}"]`) as HTMLImageElement;
             if (imageElement) imageElement.src = placeholderSrc;
           }}
@@ -57,10 +57,10 @@ const ServiceCard = memo(function ServiceCard({ service }: ServiceCardProps) {
         )}
       </CardHeader>
       <CardContent className='flex-grow'>
-        <CardDescription className='text-sm text-gray-700 line-clamp-3'>
+        <CardDescription className='text-sm text-brand-light-gray line-clamp-3'>
           {service.description || 'No description available.'}
         </CardDescription>
-        <div className='mt-3 space-y-1 text-sm text-gray-600'>
+        <div className='mt-3 space-y-1 text-sm text-brand-light-gray'>
           {service.practitionerName && (
             <div className="flex items-center">
               <UserCircle size={16} className="mr-2 text-brand-primary" />
@@ -87,4 +87,4 @@ const ServiceCard = memo(function ServiceCard({ service }: ServiceCardProps) {
 
 ServiceCard.displayName = 'ServiceCard';
 
-export default ServiceCard; 
+export default ServiceCard;

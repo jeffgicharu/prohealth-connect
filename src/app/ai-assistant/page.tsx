@@ -155,6 +155,14 @@ export default function AIAssistantPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="mb-4 text-sm text-brand-light-gray space-y-1">
+                <p>You can ask about general health topics or describe symptoms for informational insights.</p>
+                <ul className="list-disc list-inside text-xs">
+                  <li>Be descriptive but concise.</li>
+                  <li>Avoid asking for specific medical diagnoses or treatments.</li>
+                  <li>Example: &quot;What are common causes of persistent fatigue?&quot;</li>
+                </ul>
+              </div>
               <form onSubmit={handleGetInsights} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="symptoms" className="text-brand-dark font-medium">
@@ -173,7 +181,7 @@ export default function AIAssistantPage() {
                   type="submit"
                   disabled={!symptoms.trim()}
                   className="w-full bg-brand-primary hover:bg-brand-primary-hover text-brand-white py-3 text-lg font-semibold transition-all duration-200"
-                  loading={isLoading ? "true" : undefined}
+                  isLoading={isLoading}
                   loadingText="Getting Insights..."
                 >
                   <div className="flex items-center justify-center">
