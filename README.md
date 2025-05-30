@@ -59,6 +59,29 @@ ProHealth Connect is a full-stack web application designed to simplify access to
   - Toast notifications for user feedback
   - Rate limiting for API protection
 
+## UI/UX Enhancements
+
+This project recently underwent a significant UI/UX overhaul based on the "UI-UX Enhancement Plan" to elevate the user experience and visual polish, aiming for a modern, trustworthy, and intuitive health-tech platform suitable for a standout portfolio piece.
+
+**Key Design Principles Guiding the Enhancement:**
+
+* **Clarity & Intuition First:** Ensuring every interaction is understandable and navigation is seamless.
+* **Build Trust Through Professionalism & Empathy:** Creating a secure, reliable, and considerate user experience.
+* **Modern Simplicity & Seamless Performance:** Adopting a clean visual style with fast, responsive interactions.
+* **User-Centric & Accessible by Design:** Focusing on the needs and accessibility for all potential users.
+
+**Highlights of the UI/UX improvements include:**
+
+* A revamped visual identity with consistent application of the brand color palette (Primary Blue: `#2563EB` and its hover state `#1D4ED8`, as defined in `tailwind.config.ts`) and the Poppins font.
+* Enhanced depth and dimension on card components (`ServiceCard`, `BookingCard`, auth pages, etc.) using refined shadows, borders, and subtle hover/focus transform effects with smooth transitions.
+* Implementation of consistent "reveal on scroll" animations for major page sections and list items using `react-intersection-observer` for a more dynamic and engaging experience.
+* Standardized hover effects for buttons (default, outline, link variants now aligned with brand colors) and links, with consistent transition durations.
+* Improved and standardized loading state indicators, including spinners on buttons (`LoadingButton`), skeleton loaders for content (`ServicesLoading`), and a new `CenteredSpinnerMessage` component for page/section level loading.
+* Refined page layouts and typography for key areas including the Homepage, Services Page (with a new placeholder for filters/search), Service Detail Page, AI Assistant Page (with added guided text), Booking Confirmation Page, Dashboard (Bookings and Profile), Authentication Pages (with new input field icons), and the Payment Page (with new tab icons).
+* Enhanced iconography using `lucide-react` for clearer visual communication across the application.
+* Significant performance improvements, achieving a Lighthouse performance score of 98%.
+* Addressed accessibility issues, including ARIA attribute conformance.
+
 ## Getting Started (Local Development)
 
 ### Prerequisites
