@@ -6,9 +6,9 @@ ProHealth Connect is a full-stack web application designed to simplify access to
 
 ## Screenshots
 
-![Homepage](PATH_TO_HOMEPAGE_SCREENSHOT.png)
-![AI Assistant](PATH_TO_AI_ASSISTANT_SCREENSHOT.png)
-![Bookings Dashboard](PATH_TO_BOOKINGS_SCREENSHOT.png)
+![Homepage](/images/screenshots/Home.jpg)
+![AI Assistant](/images/screenshots/AI-Assistant.jpg)
+![Bookings Dashboard](/images/screenshots/Bookings.jpg)
 
 ## Tech Stack
 
